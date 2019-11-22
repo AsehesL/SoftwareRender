@@ -21,13 +21,11 @@ bool Application::init(int width, int height, const char * applicationName)
 		MessageBox(NULL, L"窗口创建失败", L"初始化失败", MB_ERR_INVALID_CHARS);
 		return false;
 	}
-	surface = SDL_GetWindowSurface(window);
-	if(surface == nullptr)
+	graphics = new Graphics();
+	if(!graphics->init(window, width, height))
 	{
-		MessageBox(NULL, L"窗口Surface创建失败", L"初始化失败", MB_ERR_INVALID_CHARS);
 		return false;
 	}
-	SDL_FillRect(surface, 0, 0);
 	SDL_UpdateWindowSurface(window);
 	return true;
 }
@@ -62,6 +60,8 @@ void Application::run()
 
 void Application::close()
 {
+	delete graphics;
+	graphics = 0;
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 }

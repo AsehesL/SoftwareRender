@@ -157,7 +157,6 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Graphics.cpp" />
-    <ClCompile Include="Rasterizer.cpp" />
     <ClCompile Include="RenderBuffer.cpp" />
     <ClCompile Include="SoftwareRender.cpp" />
   </ItemGroup>
@@ -165,7 +164,6 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Math.h" />
-    <ClInclude Include="Rasterizer.h" />
     <ClInclude Include="RenderBuffer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,4 +1,5 @@
 #pragma once
+#include "Graphics.h"
 
 extern "C" {
 #include "SDL.h"
@@ -18,7 +19,7 @@ private:
 	bool application_loop();
 
 public:
+	Graphics* graphics;
 	SDL_Window* window;
-	SDL_Surface* surface;
 };
 
