@@ -41,6 +41,7 @@ public:
 private:
 	void set_pixel(int x, int y, Uint32 color);
 	void set_depth(int x, int y, float);
+	void draw_point(int);
 
 private:
 	float* _zbuffer;

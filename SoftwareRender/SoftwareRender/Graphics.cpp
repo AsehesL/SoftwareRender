@@ -7,6 +7,7 @@ Graphics::Graphics()
 
 Graphics::~Graphics()
 {
+	delete[] _zbuffer;
 }
 
 bool Graphics::init(SDL_Window* window, int width, int height)
@@ -18,6 +19,10 @@ bool Graphics::init(SDL_Window* window, int width, int height)
 		return false;
 	}
 	SDL_FillRect(_surface, 0, 0);
+
+	_zbuffer = new float[width*height];
+
+	return true;
 }
 
 void Graphics::clear(ClearFlags clearflag)
@@ -50,7 +55,11 @@ void Graphics::set_renderbuffer(RenderBuffer* buffer)
 
 void Graphics::draw_primitive(Primitive primitive, int count, int)
 {
-
+	switch (primitive) {
+	case Primitive_Point:
+		draw_point(count);
+		break;
+	}
 }
 
 void Graphics::set_pixel(int x, int y, Uint32 color)
@@ -60,6 +69,11 @@ void Graphics::set_pixel(int x, int y, Uint32 color)
 		_renderbuffer->set_pixel(x, y, color);
 		return;
 	}
+	if (x < 0 || x >= _width)
+		return;
+	if (y < 0 || y >= _height)
+		return;
+
 	int bpp = _surface->format->BytesPerPixel;
 	Uint8 *p = (Uint8 *)_surface->pixels + y * _surface->pitch + x * bpp;
 
@@ -89,4 +103,21 @@ void Graphics::set_pixel(int x, int y, Uint32 color)
 		*(Uint32 *)p = color;
 		break;
 	}
+}
+
+void Graphics::set_depth(int x, int y, float depth)
+{
+	if (_renderbuffer != nullptr) {
+		_renderbuffer->set_depth(x, y, depth);
+		return;
+	}
+	if (x < 0 || x >= _width)
+		return;
+	if (y < 0 || y >= _height)
+		return;
+	_zbuffer[y*_width + x] = depth;
+}
+
+void Graphics::draw_point(int)
+{
 }
