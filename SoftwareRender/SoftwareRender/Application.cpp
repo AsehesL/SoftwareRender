@@ -26,6 +26,20 @@ bool Application::init(int width, int height, const char * applicationName)
 	{
 		return false;
 	}
+	Vector3 vertexdata[] = {
+				 Vector3(0.5f,  0.5f, 0.0f),
+			 Vector3(0.5f, -0.5f, 0.0f),
+			Vector3 (-0.5f, -0.5f, 0.0f),
+			Vector3 (-0.5f,  0.5f, 0.0f),
+	};
+	unsigned int indices[] = {  // note that we start from 0!
+		0, 2, 1,   // first triangle
+		0,3,2,
+	};
+	graphics->bind_vertexdata(vertexdata, 4);
+	graphics->bind_indexdata(indices, 6);
+	graphics->draw_primitive(Primitive_Triangle);
+
 	SDL_UpdateWindowSurface(window);
 	return true;
 }
@@ -47,6 +61,10 @@ void Application::run()
 		if (msg.message == WM_QUIT)
 		{
 			done = true;
+		}
+		else if (msg.message == WM_PAINT)
+		{
+
 		}
 		else
 		{

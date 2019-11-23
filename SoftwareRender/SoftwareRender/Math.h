@@ -9,6 +9,29 @@
 
 #define IS_FLOAT_EQUAL(a, b) (a>=b-EPSILNON&&a<=b+EPSILNON)   //浮点数比较
 
+inline int max_i(int a, int b)
+{
+	if (a > b)
+		return  a;
+	return b;
+}
+
+inline int min_i(int a, int b)
+{
+	if (a < b)
+		return  a;
+	return b;
+}
+
+inline int clamp_i(int v, int min, int max)
+{
+	if (v < min)
+		v = min;
+	else if (v > max)
+		v = max;
+	return v;
+}
+
 typedef struct Vector2
 {
 public:
@@ -39,7 +62,7 @@ public:
 		float m = magnitude();
 		if (m > 0.0f)
 		{
-			float im = 1.0 / m;
+			float im = 1.0f / m;
 			x *= im;
 			y *= im;
 		}
@@ -55,6 +78,13 @@ public:
 		out.x = x;
 		out.y = y;
 		out.normalize();
+	}
+
+	Vector2 get_normalized() const
+	{
+		Vector2 out = Vector2(x, y);
+		out.normalize();
+		return out;
 	}
 
 	void scale(const Vector2& scale)
@@ -138,6 +168,11 @@ public:
 		out = Vector2(a.x + (b.x - a.x)*t, a.y + (b.y - a.y)*t);
 	}
 
+	static Vector2 lerp(const Vector2 & a, const Vector2 & b, float t)
+	{
+		return Vector2(a.x + (b.x - a.x)*t, a.y + (b.y - a.y)*t);
+	}
+
 	static void lerp01(const Vector2 & a, const Vector2 & b, float t, Vector2& out)
 	{
 		if (t < 0.0f)
@@ -147,9 +182,23 @@ public:
 		lerp(a, b, t, out);
 	}
 
+	static Vector2 lerp01(const Vector2 & a, const Vector2 & b, float t)
+	{
+		if (t < 0.0f)
+			t = 0.0f;
+		else if (t > 1.0f)
+			t = 1.0f;
+		return lerp(a, b, t);
+	}
+
 	static void reflect(const Vector2 & direction, const Vector2 & normal, Vector2& out)
 	{
 		out = 2.0f * Vector2::dot(normal, direction) * normal - direction;
+	}
+
+	static Vector2 reflect(const Vector2 & direction, const Vector2 & normal)
+	{
+		return 2.0f * Vector2::dot(normal, direction) * normal - direction;
 	}
 
 	static float magnitude(const Vector2 & vector)
@@ -185,14 +234,24 @@ public:
 		return (lhs - rhs).magnitude();
 	}
 
-	static void max(const Vector2 & lhs, const Vector2 & rhs, Vector2& out)
+	static void max_vector(const Vector2 & lhs, const Vector2 & rhs, Vector2& out)
 	{
 		out = Vector2(lhs.x > rhs.x ? lhs.x : rhs.x, lhs.y > rhs.y ? lhs.y : rhs.y);
 	}
 
-	static void min(const Vector2 & lhs, const Vector2 & rhs, Vector2& out)
+	static Vector2 max_vector(const Vector2 & lhs, const Vector2 & rhs)
+	{
+		return Vector2(lhs.x > rhs.x ? lhs.x : rhs.x, lhs.y > rhs.y ? lhs.y : rhs.y);
+	}
+
+	static void min_vector(const Vector2 & lhs, const Vector2 & rhs, Vector2& out)
 	{
 		out = Vector2(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y);
+	}
+
+	static Vector2 min_vector(const Vector2 & lhs, const Vector2 & rhs)
+	{
+		return Vector2(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y);
 	}
 
 	static void normalize(const Vector2 & vector, Vector2& out)
@@ -200,9 +259,14 @@ public:
 		vector.get_normalized(out);
 	}
 
-	static void Scale(const Vector2 & a, const Vector2 & b, Vector2& out)
+	static void scale(const Vector2 & a, const Vector2 & b, Vector2& out)
 	{
 		out = Vector2(a.x * b.x, a.y * b.y);
+	}
+
+	static Vector2 scale(const Vector2 & a, const Vector2 & b)
+	{
+		return Vector2(a.x * b.x, a.y * b.y);
 	}
 
 	friend Vector2 operator*(float v, const Vector2 & vector)
@@ -251,6 +315,12 @@ public:
 		out.y = y;
 		out.z = z;
 		out.normalize();
+	}
+	Vector3 get_normalized() const
+	{
+		Vector3 out = Vector3(x, y, z);
+		out.normalize();
+		return out;
 	}
 	void scale(const Vector3& scale)
 	{
@@ -338,6 +408,10 @@ public:
 	{
 		out = Vector3(a.x + (b.x - a.x)*t, a.y + (b.y - a.y)*t, a.z + (b.z - a.z)*t);
 	}
+	static Vector3 lerp(const Vector3& a, const Vector3& b, float t)
+	{
+		return Vector3(a.x + (b.x - a.x)*t, a.y + (b.y - a.y)*t, a.z + (b.z - a.z)*t);
+	}
 	static void lerp01(const Vector3& a, const Vector3& b, float t, Vector3& out)
 	{
 		if (t < 0.0f)
@@ -346,9 +420,21 @@ public:
 			t = 1.0f;
 		lerp(a, b, t, out);
 	}
+	static Vector3 lerp01(const Vector3& a, const Vector3& b, float t)
+	{
+		if (t < 0.0f)
+			t = 0.0f;
+		else if (t > 1.0f)
+			t = 1.0f;
+		return lerp(a, b, t);
+	}
 	static void reflect(const Vector3& direction, const Vector3& normal, Vector3& out)
 	{
 		out = 2.0f * dot(normal, direction)*normal - direction;
+	}
+	static Vector3 reflect(const Vector3& direction, const Vector3& normal)
+	{
+		return 2.0f * dot(normal, direction)*normal - direction;
 	}
 	static float angle(const Vector3& fromvec, const Vector3& tovec)
 	{
@@ -371,13 +457,21 @@ public:
 		Vector3 v = lhs - rhs;
 		return v.magnitude();
 	}
-	static void max(const Vector3& lhs, const Vector3& rhs, Vector3& out)
+	static void max_vector(const Vector3& lhs, const Vector3& rhs, Vector3& out)
 	{
 		out = Vector3(lhs.x > rhs.x ? lhs.x : rhs.x, lhs.y > rhs.y ? lhs.y : rhs.y, lhs.z > rhs.z ? lhs.z : rhs.z);
 	}
-	static void min(const Vector3& lhs, const Vector3& rhs, Vector3& out)
+	static Vector3 max_vector(const Vector3& lhs, const Vector3& rhs)
+	{
+		return Vector3(lhs.x > rhs.x ? lhs.x : rhs.x, lhs.y > rhs.y ? lhs.y : rhs.y, lhs.z > rhs.z ? lhs.z : rhs.z);
+	}
+	static void min_vector(const Vector3& lhs, const Vector3& rhs, Vector3& out)
 	{
 		out = Vector3(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y, lhs.z < rhs.z ? lhs.z : rhs.z);
+	}
+	static Vector3 min_vector(const Vector3& lhs, const Vector3& rhs)
+	{
+		return Vector3(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y, lhs.z < rhs.z ? lhs.z : rhs.z);
 	}
 	static float magnitude(const Vector3& vector)
 	{
@@ -395,9 +489,17 @@ public:
 	{
 		out = Vector3(a.x*b.x, a.y*b.y, a.z*b.z);
 	}
+	static Vector3 scale(const Vector3& a, const Vector3& b)
+	{
+		return Vector3(a.x*b.x, a.y*b.y, a.z*b.z);
+	}
 	static void cross(const Vector3& lhs, const Vector3& rhs, Vector3& out)
 	{
 		out = Vector3(lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x);
+	}
+	static Vector3 cross(const Vector3& lhs, const Vector3& rhs)
+	{
+		return Vector3(lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x);
 	}
 	static void project(const Vector3& vector, const Vector3& normal, Vector3& out)
 	{
@@ -406,11 +508,26 @@ public:
 		if (n >= EPSILNON)
 			out = normal * dot(vector, normal) / n;
 	}
+	static Vector3 project(const Vector3& vector, const Vector3& normal)
+	{
+		float n = dot(normal, normal);
+		Vector3 out = Vector3();
+		if (n >= EPSILNON)
+			out = normal * dot(vector, normal) / n;
+		return out;
+	}
 	static void project_on_plane(const Vector3& vector, const Vector3& planeNormal, Vector3& out)
 	{
 		Vector3 pj;
 		project(vector, planeNormal, pj);
 		out = vector - pj;
+	}
+	static Vector3 project_on_plane(const Vector3& vector, const Vector3& planeNormal)
+	{
+		Vector3 pj;
+		project(vector, planeNormal, pj);
+		Vector3 out = vector - pj;
+		return out;
 	}
 
 public:
@@ -469,6 +586,12 @@ public:
 		out.z = z;
 		out.w = w;
 		out.normalize();
+	}
+	Vector4 get_normalized() const
+	{
+		Vector4 out(x, y, z, w);
+		out.normalize();
+		return out;
 	}
 	void scale(const Vector4& scale)
 	{
@@ -564,6 +687,10 @@ public:
 	{
 		out = Vector4(a.x + (b.x - a.x)*t, a.y + (b.y - a.y)*t, a.z + (b.z - a.z)*t, a.w + (b.w - a.w)*t);
 	}
+	static Vector4 lerp(const Vector4& a, const Vector4& b, float t)
+	{
+		return Vector4(a.x + (b.x - a.x)*t, a.y + (b.y - a.y)*t, a.z + (b.z - a.z)*t, a.w + (b.w - a.w)*t);
+	}
 	static void lerp01(const Vector4& a, const Vector4& b, float t, Vector4& out)
 	{
 		if (t < 0.0f)
@@ -571,6 +698,14 @@ public:
 		else if (t > 1.0f)
 			t = 1.0f;
 		lerp(a, b, t, out);
+	}
+	static Vector4 lerp01(const Vector4& a, const Vector4& b, float t)
+	{
+		if (t < 0.0f)
+			t = 0.0f;
+		else if (t > 1.0f)
+			t = 1.0f;
+		return lerp(a, b, t);
 	}
 	static float dot(const Vector4& lhs, const Vector4& rhs)
 	{
@@ -581,13 +716,21 @@ public:
 		Vector4 v = lhs - rhs;
 		return v.magnitude();
 	}
-	static void max(const Vector4& lhs, const Vector4& rhs, Vector4& out)
+	static void max_vector(const Vector4& lhs, const Vector4& rhs, Vector4& out)
 	{
 		out = Vector4(lhs.x > rhs.x ? lhs.x : rhs.x, lhs.y > rhs.y ? lhs.y : rhs.y, lhs.z > rhs.z ? lhs.z : rhs.z, lhs.w > rhs.w ? lhs.w : rhs.w);
 	}
-	static void min(const Vector4& lhs, const Vector4& rhs, Vector4& out)
+	static Vector4 max_vector(const Vector4& lhs, const Vector4& rhs)
+	{
+		return Vector4(lhs.x > rhs.x ? lhs.x : rhs.x, lhs.y > rhs.y ? lhs.y : rhs.y, lhs.z > rhs.z ? lhs.z : rhs.z, lhs.w > rhs.w ? lhs.w : rhs.w);
+	}
+	static void min_vector(const Vector4& lhs, const Vector4& rhs, Vector4& out)
 	{
 		out = Vector4(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y, lhs.z < rhs.z ? lhs.z : rhs.z, lhs.w < rhs.w ? lhs.w : rhs.w);
+	}
+	static Vector4 min_vector(const Vector4& lhs, const Vector4& rhs)
+	{
+		return Vector4(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y, lhs.z < rhs.z ? lhs.z : rhs.z, lhs.w < rhs.w ? lhs.w : rhs.w);
 	}
 	static float magnitude(const Vector4& vector)
 	{
@@ -605,9 +748,17 @@ public:
 	{
 		out = Vector4(a.x*b.x, a.y*b.y, a.z*b.z, a.w*b.w);
 	}
+	static Vector4 scale(const Vector4& a, const Vector4& b)
+	{
+		return Vector4(a.x*b.x, a.y*b.y, a.z*b.z, a.w*b.w);
+	}
 	static void project(const Vector4& a, const Vector4& b, Vector4& out)
 	{
 		out = b * Vector4::dot(a, b) / Vector4::dot(b, b);
+	}
+	static Vector4 project(const Vector4& a, const Vector4& b)
+	{
+		return b * Vector4::dot(a, b) / Vector4::dot(b, b);
 	}
 
 public:
@@ -740,7 +891,7 @@ public:
 	}
 	static void slerp(const Quaternion& a, const Quaternion& b, float t, Quaternion& out)
 	{
-		double dot = a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
+		float dot = a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
 
 		Quaternion temp = b;
 
@@ -749,7 +900,7 @@ public:
 			dot = -dot;
 		}
 
-		const float DOT_THRESHOLD = 0.9995;
+		const float DOT_THRESHOLD = 0.9995f;
 		if (dot > DOT_THRESHOLD) {
 
 			out = Quaternion(a.x + t * (temp.x - a.x), a.y + t * (temp.y - a.y), a.z + t * (temp.z - a.z), a.w + t * (temp.w - a.w));
@@ -757,12 +908,12 @@ public:
 			return;
 		}
 
-		float theta_0 = acos(dot);
+		float theta_0 = acosf(dot);
 		float theta = theta_0 * t;
-		float sin_theta = sin(theta);
-		float sin_theta_0 = sin(theta_0);
+		float sin_theta = sinf(theta);
+		float sin_theta_0 = sinf(theta_0);
 
-		float s0 = cos(theta) - dot * sin_theta / sin_theta_0;
+		float s0 = cosf(theta) - dot * sin_theta / sin_theta_0;
 		float s1 = sin_theta / sin_theta_0;
 
 		out = Quaternion(s0*a.x + s1 * temp.x, s0*a.y + s1 * temp.y, s0*a.z + s1 * temp.z, s0*a.w + s1 * temp.w);
@@ -1238,10 +1389,10 @@ public:
 			this->operator[](i) = tmp[i] * det;
 	}
 
-	static void perspective(Matrix* matrix, float fov, float aspect, float near, float far)
+	static void perspective(Matrix* matrix, float fov, float aspect, float nearplane, float farplane)
 	{
 		float cotfov = 1.0f / tanf(fov*0.5f);
-		float delta = far - near;
+		float delta = farplane - nearplane;
 
 		matrix->m00 = cotfov / aspect;
 		matrix->m01 = 0.0f;
@@ -1255,17 +1406,17 @@ public:
 
 		matrix->m20 = 0.0f;
 		matrix->m21 = 0.0f;
-		matrix->m22 = -(far + near) / delta;
+		matrix->m22 = -(farplane + nearplane) / delta;
 		matrix->m23 = -1.0f;
 
 		matrix->m30 = 0.0f;
 		matrix->m31 = 0.0f;
-		matrix->m32 = -2.0f*near*far / delta;
+		matrix->m32 = -2.0f*nearplane*farplane / delta;
 		matrix->m33 = 0.0f;
 	}
-	static void ortho(Matrix* matrix, float width, float height, float near, float far)
+	static void ortho(Matrix* matrix, float width, float height, float nearplane, float farplane)
 	{
-		float fn = 1.0f / (far - near);
+		float fn = 1.0f / (farplane - nearplane);
 		matrix->m00 = 2.0f / width;
 		matrix->m01 = 0.0f;
 		matrix->m02 = 0.0f;
@@ -1276,11 +1427,11 @@ public:
 		matrix->m13 = 0.0f;
 		matrix->m20 = 0.0f;
 		matrix->m21 = 0.0f;
-		matrix->m22 = -2.0*fn;
+		matrix->m22 = -2.0f*fn;
 		matrix->m23 = 0.0f;
 		matrix->m30 = 0.0f;
 		matrix->m31 = 0.0f;
-		matrix->m32 = -(far + near)*fn;
+		matrix->m32 = -(farplane + nearplane)*fn;
 		matrix->m33 = 1.0f;
 	}
 	static void identity(Matrix*matrix)
