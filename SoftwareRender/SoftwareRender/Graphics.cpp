@@ -6,6 +6,10 @@ Graphics::Graphics()
 	_renderbuffer = 0;
 	_surface = 0;
 	_zbuffer = 0;
+	_shader = 0;
+	_vertexdata = 0;
+	_colordata = 0;
+	_indexdata = 0;
 }
 
 Graphics::~Graphics()
@@ -48,7 +52,7 @@ void Graphics::clear(ClearFlags clearflag)
 	}
 }
 
-void Graphics::clear_color(Uint32 color)
+void Graphics::clear_color(Color color)
 {
 	_clear_color = color;
 }
@@ -58,12 +62,25 @@ void Graphics::set_renderbuffer(RenderBuffer* buffer)
 	_renderbuffer = buffer;
 }
 
+void Graphics::set_shader(Shader* shader)
+{
+	_shader = shader;
+}
+
 void Graphics::bind_vertexdata(Vector3* data, int count)
 {
 	_vertexdata = data;
 	_vertexcount = count;
 	if (_vertexdata == nullptr)
 		_vertexcount = 0;
+}
+
+void Graphics::bind_colordata(Color* data, int count)
+{
+	_colordata = data;
+	_colorcount = count;
+	if (_colordata == nullptr)
+		_colorcount = 0;
 }
 
 void Graphics::bind_indexdata(unsigned int* data, int count)
@@ -78,21 +95,34 @@ void Graphics::draw_primitive(Primitive primitive)
 {
 	switch (primitive) {
 	case Primitive_Point:
-		//draw_point(count);
+		draw_points();
 		break;
 	case Primitive_Triangle:
 		draw_triangles();
 		break;
+	case Primitive_Line:
+		draw_lines();
+		break;
+	case Primitive_LineStrip:
+		draw_linestrips();
+		break;
 	}
 }
 
-void Graphics::set_pixel(int x, int y, Uint32 color)
+void Graphics::set_pixel(int x, int y, Color color)
 {
 	if(_renderbuffer != nullptr)
 	{
 		_renderbuffer->set_pixel(x, y, color);
 		return;
 	}
+
+	int r = int(color.r * 255.0f);
+	int g = int(color.g * 255.0f);
+	int b = int(color.b * 255.0f);
+	int a = int(color.a * 255.0f);
+	UINT32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
+
 	if (x < 0 || x >= _width)
 		return;
 	if (y < 0 || y >= _height)
@@ -103,28 +133,28 @@ void Graphics::set_pixel(int x, int y, Uint32 color)
 
 	switch (bpp) {
 	case 1:
-		*p = color;
+		*p = ucolor;
 		break;
 
 	case 2:
-		*(Uint16 *)p = color;
+		*(Uint16 *)p = ucolor;
 		break;
 
 	case 3:
 		if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-			p[0] = (color >> 16) & 0xff;
-			p[1] = (color >> 8) & 0xff;
-			p[2] = color & 0xff;
+			p[0] = (ucolor >> 16) & 0xff;
+			p[1] = (ucolor >> 8) & 0xff;
+			p[2] = ucolor & 0xff;
 		}
 		else {
-			p[0] = color & 0xff;
-			p[1] = (color >> 8) & 0xff;
-			p[2] = (color >> 16) & 0xff;
+			p[0] = ucolor & 0xff;
+			p[1] = (ucolor >> 8) & 0xff;
+			p[2] = (ucolor >> 16) & 0xff;
 		}
 		break;
 
 	case 4:
-		*(Uint32 *)p = color;
+		*(Uint32 *)p = ucolor;
 		break;
 	}
 }
@@ -142,9 +172,35 @@ void Graphics::set_depth(int x, int y, float depth)
 	_zbuffer[y*_width + x] = depth;
 }
 
+void Graphics::draw_points()
+{
+	if (_shader == nullptr)
+		return;
+	for (int i = 0; i < _indexcount; i += 1)
+	{
+		int index = _indexdata[i];
+		if (index >= _vertexcount)
+			return;
+
+		VertexInput vertex;
+		vertex.vertex = _vertexdata[index];
+
+		if (index < _colorcount)
+			vertex.color = _colordata[index];
+
+		FragmentInput output;
+
+		_shader->vert(vertex, output);
+
+		draw_point(output);
+	}
+}
+
 void Graphics::draw_triangles()
 {
-	for(int i=0;i<_indexcount;i+=3)
+	if (_shader == nullptr)
+		return;
+	for(int i=0;i<_indexcount-2;i+=3)
 	{
 		int i0 = _indexdata[i];
 		if (i0 >= _vertexcount)
@@ -156,22 +212,112 @@ void Graphics::draw_triangles()
 		if (i2 >= _vertexcount)
 			return;
 
-		Vector3 v0 = _vertexdata[i0];
-		Vector3 v1 = _vertexdata[i1];
-		Vector3 v2 = _vertexdata[i2];
+		VertexInput vertex0, vertex1, vertex2;
+		vertex0.vertex = _vertexdata[i0];
+		vertex1.vertex = _vertexdata[i1];
+		vertex2.vertex = _vertexdata[i2];
 
-		draw_triangle(v0, v1, v2);
+		if (i0 < _colorcount)
+			vertex0.color = _colordata[i0];
+		if (i1 < _colorcount)
+			vertex1.color = _colordata[i1];
+		if (i2 < _colorcount)
+			vertex2.color = _colordata[i2];
+
+		FragmentInput output0, output1, output2;
+
+		_shader->vert(vertex0, output0);
+		_shader->vert(vertex1, output1);
+		_shader->vert(vertex2, output2);
+
+		draw_triangle(output0, output1, output2);
 	}
 }
 
-void Graphics::draw_triangle(Vector3 v0, Vector3 v1, Vector3 v2)
+void Graphics::draw_lines()
 {
-	int screenV0x = int((v0.x + 1) * 0.5f * _width);
-	int screenV0y = int((v0.y + 1) * 0.5f * _height);
-	int screenV1x = int((v1.x + 1) * 0.5f * _width);
-	int screenV1y = int((v1.y + 1) * 0.5f * _height);
-	int screenV2x = int((v2.x + 1) * 0.5f * _width);
-	int screenV2y = int((v2.y + 1) * 0.5f * _height);
+	if (_shader == nullptr)
+		return;
+	for (int i = 0; i < _indexcount-1; i += 2)
+	{
+		int i0 = _indexdata[i];
+		if (i0 >= _vertexcount)
+			return;
+		int i1 = _indexdata[i + 1];
+		if (i1 >= _vertexcount)
+			return;
+
+		VertexInput vertex0, vertex1;
+		vertex0.vertex = _vertexdata[i0];
+		vertex1.vertex = _vertexdata[i1];
+
+		if (i0 < _colorcount)
+			vertex0.color = _colordata[i0];
+		if (i1 < _colorcount)
+			vertex1.color = _colordata[i1];
+
+		FragmentInput output0, output1;
+
+		_shader->vert(vertex0, output0);
+		_shader->vert(vertex1, output1);
+
+		draw_line(output0, output1);
+	}
+}
+
+void Graphics::draw_linestrips()
+{
+	if (_shader == nullptr)
+		return;
+	for (int i = 0; i < _indexcount - 1; i += 1)
+	{
+		int i0 = _indexdata[i];
+		if (i0 >= _vertexcount)
+			return;
+		int i1 = _indexdata[i + 1];
+		if (i1 >= _vertexcount)
+			return;
+
+		VertexInput vertex0, vertex1;
+		vertex0.vertex = _vertexdata[i0];
+		vertex1.vertex = _vertexdata[i1];
+
+		if (i0 < _colorcount)
+			vertex0.color = _colordata[i0];
+		if (i1 < _colorcount)
+			vertex1.color = _colordata[i1];
+
+		FragmentInput output0, output1;
+
+		_shader->vert(vertex0, output0);
+		_shader->vert(vertex1, output1);
+
+		draw_line(output0, output1);
+	}
+}
+
+void Graphics::draw_point(FragmentInput v)
+{
+	int screenVx = int((v.position.x + 1) * 0.5f * _width);
+	int screenVy = int((-v.position.y + 1) * 0.5f * _height);
+
+	if (screenVx < 0 || screenVx >= _width)
+		return;
+	if (screenVy < 0 || screenVy >= _height)
+		return;
+
+	Color col = _shader->frag(v);
+	set_pixel(screenVx, screenVy, col);
+}
+
+void Graphics::draw_triangle(FragmentInput v0, FragmentInput v1, FragmentInput v2)
+{
+	int screenV0x = int((v0.position.x + 1) * 0.5f * _width);
+	int screenV0y = int((-v0.position.y + 1) * 0.5f * _height);
+	int screenV1x = int((v1.position.x + 1) * 0.5f * _width);
+	int screenV1y = int((-v1.position.y + 1) * 0.5f * _height);
+	int screenV2x = int((v2.position.x + 1) * 0.5f * _width);
+	int screenV2y = int((-v2.position.y + 1) * 0.5f * _height);
 
 	int minx = min_i(screenV0x, min_i(screenV1x, screenV2x));
 	int miny = min_i(screenV0y, min_i(screenV1y, screenV2y));
@@ -199,10 +345,108 @@ void Graphics::draw_triangle(Vector3 v0, Vector3 v1, Vector3 v2)
 			{
 				float u, v;
 				get_uv(screenV0x, screenV0y, screenV1x, screenV1y, screenV2x, screenV2y, i, j, u, v);
-				//int r
-				//Color col = (1.0f - u - v) * Color.red + v * Color.green + u * Color.blue;
-				set_pixel(i, j, SDL_MapRGB(_surface->format, 255, 255, 255));
+
+				FragmentInput o = FragmentInput::interpolation(v0, v1, v2, u, v, 1.0f - u - v);
+				Color col = _shader->frag(o);
+				set_pixel(i, j, col);
 			}
+		}
+	}
+}
+
+void Graphics::draw_line(FragmentInput v0, FragmentInput v1)
+{
+	int x0 = int((v0.position.x + 1) * 0.5f * _width);
+	int y0 = int((-v0.position.y + 1) * 0.5f * _height);
+	int x1 = int((v1.position.x + 1) * 0.5f * _width);
+	int y1 = int((-v1.position.y + 1) * 0.5f * _height);
+	int beginx = x0;
+	int beginy = y0;
+	int endx = x1;
+	int endy = y1;
+
+	int dx = endx - beginx;
+	if (dx < 0)
+		dx = -dx;
+	int dy = endy - beginy;
+	if (dy < 0)
+		dy = -dy;
+	int step = ((endy < beginy && endx >= beginx) || (endy >= beginy && endx < beginx)) ? -1 : 1;
+
+	int p, twod, twodm;
+	int pv1, pv2, to;
+
+	float t;
+
+	if (dy < dx)
+	{
+		p = 2 * dy - dx;
+		twod = 2 * dy;
+		twodm = 2 * (dy - dx);
+		if (beginx > endx)
+		{
+			pv1 = endx;
+			pv2 = endy;
+			endx = beginx;
+		}
+		else
+		{
+			pv1 = beginx;
+			pv2 = beginy;
+		}
+		to = endx;
+	}
+	else
+	{
+		p = 2 * dx - dy;
+		twod = 2 * dx;
+		twodm = 2 * (dx - dy);
+		if (beginy > endy)
+		{
+			pv2 = endx;
+			pv1 = endy;
+			endy = beginy;
+		}
+		else
+		{
+			pv2 = beginx;
+			pv1 = beginy;
+		}
+		to = endy;
+	}
+	if (dy < dx) {
+		get_lineuv(x0, y0, x1, y1, pv1, pv2, t);
+		FragmentInput o = FragmentInput::interpolation(v0, v1, t);
+		Color col = _shader->frag(o);
+		set_pixel(pv1, pv2, col);
+	}
+	else {
+		get_lineuv(x0, y0, x1, y1, pv2, pv1, t);
+		FragmentInput o = FragmentInput::interpolation(v0, v1, t);
+		Color col = _shader->frag(o);
+		set_pixel(pv2, pv1, col);
+	}
+	while (pv1 < to)
+	{
+		pv1++;
+		if (p < 0)
+			p += twod;
+		else
+		{
+			pv2 += step;
+			p += twodm;
+		}
+		if (dy < dx) {
+			get_lineuv(x0, y0, x1, y1, pv1, pv2, t);
+			FragmentInput o = FragmentInput::interpolation(v0, v1, t);
+			Color col = _shader->frag(o);
+			set_pixel(pv1, pv2, col);
+		}
+		else {
+			get_lineuv(x0, y0, x1, y1, pv2, pv1, t);
+			FragmentInput o = FragmentInput::interpolation(v0, v1, t);
+			Color col = _shader->frag(o);
+			set_pixel(pv2, pv1, col);
 		}
 	}
 }
@@ -240,6 +484,13 @@ void Graphics::get_uv(int x0, int y0, int x1, int y1, int x2, int y2, int x, int
 
 	u = (dot11 * dot02 - dot01 * dot12) * inverDeno;
 	v = (dot00 * dot12 - dot01 * dot02) * inverDeno;
+}
+
+void Graphics::get_lineuv(int x0, int y0, int x1, int y1, int x, int y, float& t)
+{
+	float dis = sqrtf((x1 - x0)*(x1 - x0) + (y1 - y0)*(y1 - y0));
+	float dist = sqrtf((x - x0)*(x - x0) + (y - y0)*(y - y0));
+	t = dist / dis;
 }
 
 //void Graphics::draw_point(int)

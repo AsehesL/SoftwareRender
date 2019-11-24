@@ -1,5 +1,6 @@
 #include "Application.h"
 #include <windows.h>
+#include "ColorShader.h"
 
 Application::Application()
 {
@@ -27,18 +28,39 @@ bool Application::init(int width, int height, const char * applicationName)
 		return false;
 	}
 	Vector3 vertexdata[] = {
-				 Vector3(0.5f,  0.5f, 0.0f),
-			 Vector3(0.5f, -0.5f, 0.0f),
-			Vector3 (-0.5f, -0.5f, 0.0f),
-			Vector3 (-0.5f,  0.5f, 0.0f),
+			Vector3(-0.5f,  0.0f, 0.0f),
+			Vector3(0.0f, 1.0f, 0.0f),
+			Vector3 (0.5f, 0.0f, 0.0f),
 	};
-	unsigned int indices[] = {  // note that we start from 0!
-		0, 2, 1,   // first triangle
-		0,3,2,
+	Color colordata[] = {
+		Color(1.0f,0.0f,0.0f,1.0f),
+		Color(0.0f,1.0f,0.0f,1.0f),
+		Color(0.0f,0.0f,1.0f,1.0f),
 	};
-	graphics->bind_vertexdata(vertexdata, 4);
-	graphics->bind_indexdata(indices, 6);
-	graphics->draw_primitive(Primitive_Triangle);
+	unsigned int indices[] = {  
+		0, 1, 2, 
+	};
+	ColorShader* cshader = new ColorShader();
+	Matrix localtoworld,worldtocamera,projection;
+	Vector3 pos(-0.52087f, -0.9703822f, 1.703086f);
+	Quaternion rot;
+	Quaternion::euler(&rot, 0, 0, 0);
+	Vector3 scale(1, 1, 1);
+	Matrix::TRS(&localtoworld, pos, rot, scale);
+	Matrix::lookat(&worldtocamera, Vector3(-1.0480f, 0.0833f, 0.1733f), Vector3(-1.0480f + 0.2954f, 0.0833f - 0.3929f, 0.1733f + 0.8708f), Vector3(0.1262f, 0.9196f, 0.3721f));
+	Matrix::perspective(&projection, 60 * DEG_TO_RAD, ((float)width) / height, 0.3f, 1000.0f);
+	cshader->set_model_matrix(&localtoworld);
+	cshader->set_view_matrix(&worldtocamera);
+	cshader->set_projection_matrix(&projection);
+
+	graphics->bind_vertexdata(vertexdata, 3);
+	graphics->bind_colordata(colordata, 3);
+	graphics->bind_indexdata(indices, 3);
+	graphics->set_shader(cshader);
+	graphics->draw_primitive(Primitive_LineStrip);
+	graphics->set_shader(0);
+	delete cshader;
+	cshader = 0;
 
 	SDL_UpdateWindowSurface(window);
 	return true;
