@@ -33,6 +33,9 @@
     <ClCompile Include="ColorShader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Rasterization.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -54,6 +57,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ColorShader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Rasterization.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

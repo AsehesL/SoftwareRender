@@ -38,6 +38,6 @@ public:
 	Shader();
 	~Shader();
 	virtual void vert(const VertexInput& in, FragmentInput& out) = 0;
-	virtual Color frag(const FragmentInput& in) = 0;
+	virtual bool frag(const FragmentInput& in, Color& out) = 0;
 };
 

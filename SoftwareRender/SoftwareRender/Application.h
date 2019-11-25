@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics.h"
+#include "ColorShader.h"
 
 extern "C" {
 #include "SDL.h"
@@ -16,10 +17,14 @@ public:
 	void close();
 
 private:
-	bool application_loop();
+	bool application_loop(float time);
 
 public:
 	Graphics* graphics;
 	SDL_Window* window;
+	ColorShader* testshader;
+	Vector3* _vertex;
+	Color* _colors;
+	unsigned int* _triangles;
 };
 

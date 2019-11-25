@@ -158,6 +158,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ColorShader.cpp" />
     <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="Rasterization.cpp" />
     <ClCompile Include="RenderBuffer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SoftwareRender.cpp" />
@@ -168,6 +169,7 @@
     <ClInclude Include="ColorShader.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="Rasterization.h" />
     <ClInclude Include="RenderBuffer.h" />
     <ClInclude Include="Shader.h" />
   </ItemGroup>

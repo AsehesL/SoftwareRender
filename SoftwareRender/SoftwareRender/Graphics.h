@@ -3,10 +3,7 @@
 #include "RenderBuffer.h"
 #include "Color.h"
 #include "Shader.h"
-
-extern "C" {
-#include "SDL.h"
-}
+#include "Rasterization.h"
 
 enum ClearFlags
 {
@@ -23,7 +20,7 @@ enum Primitive
 };
 
 
-class Graphics
+class Graphics : private IRasterizable
 {
 public:
 	Graphics();
@@ -41,6 +38,8 @@ public:
 	void draw_primitive(Primitive);
 	void enable();
 	void disable();
+	float get_width() { return _width; }
+	float get_height() { return _height; }
 
 private:
 	void set_pixel(int x, int y, Color color);
@@ -50,14 +49,8 @@ private:
 	void draw_lines();
 	void draw_linestrips();
 
-	void draw_point(FragmentInput);
-	void draw_triangle(FragmentInput, FragmentInput, FragmentInput);
-	void draw_line(FragmentInput, FragmentInput);
-
-	int edge_equation(int beginx, int beginy, int endx, int endy, int x, int y);
-	bool is_edge_topleft(int x0, int y0, int x1, int y1);
-	void get_uv(int x0, int y0, int x1, int y1, int x2, int y2, int x, int y, float& u, float &v);
-	void get_lineuv(int x0, int y0, int x1, int y1, int x, int y, float& t);
+	void rasterize_fragment(int x, int y, FragmentInput& frag) override;
+	
 
 private:
 	float* _zbuffer;
@@ -70,5 +63,8 @@ private:
 	int _width, _height;
 	Color _clear_color;
 	int _vertexcount, _colorcount, _indexcount;
+	PointRasterization* _point_rasterization;
+	LineRasterization* _line_rasterization;
+	TriangleRasterization* _triangle_rasterization;
 };
 
