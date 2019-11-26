@@ -12,7 +12,7 @@ public:
 struct FragmentInput
 {
 public:
-	Vector3 position;
+	Vector4 position;
 	Color color;
 
 	static FragmentInput interpolation(const FragmentInput& i0, const FragmentInput& i1, const FragmentInput& i2, float u, float v, float w)

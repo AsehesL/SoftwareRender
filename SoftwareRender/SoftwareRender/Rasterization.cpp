@@ -12,8 +12,9 @@ Rasterization::~Rasterization()
 void PointRasterization::rasterize(IRasterizable* target, FragmentInput* inputs, int width, int height)
 {
 	FragmentInput v = inputs[0];
-	int screenVx = int((v.position.x + 1) * 0.5f * width);
-	int screenVy = int((-v.position.y + 1) * 0.5f * height);
+	float iw = 1.0f / v.position.w;
+	int screenVx = int((v.position.x * iw + 1) * 0.5f * width);
+	int screenVy = int((-v.position.y * iw + 1) * 0.5f * height);
 
 	if (screenVx < 0 || screenVx >= width)
 		return;
@@ -26,10 +27,12 @@ void LineRasterization::rasterize(IRasterizable* target, FragmentInput* inputs, 
 {
 	FragmentInput v0 = inputs[0];
 	FragmentInput v1 = inputs[1];
-	int x0 = int((v0.position.x + 1) * 0.5f * width);
-	int y0 = int((-v0.position.y + 1) * 0.5f * height);
-	int x1 = int((v1.position.x + 1) * 0.5f * width);
-	int y1 = int((-v1.position.y + 1) * 0.5f * height);
+	float iw0 = 1.0f / v0.position.w;
+	float iw1 = 1.0f / v1.position.w;
+	int x0 = int((v0.position.x * iw0 + 1) * 0.5f * width);
+	int y0 = int((-v0.position.y * iw0 + 1) * 0.5f * height);
+	int x1 = int((v1.position.x * iw1 + 1) * 0.5f * width);
+	int y1 = int((-v1.position.y * iw1 + 1) * 0.5f * height);
 	int beginx = x0;
 	int beginy = y0;
 	int endx = x1;
@@ -129,12 +132,15 @@ void TriangleRasterization::rasterize(IRasterizable* target, FragmentInput* inpu
 	FragmentInput v0 = inputs[0];
 	FragmentInput v1 = inputs[1];
 	FragmentInput v2 = inputs[2];
-	int screenV0x = int((v0.position.x + 1) * 0.5f * width);
-	int screenV0y = int((-v0.position.y + 1) * 0.5f * height);
-	int screenV1x = int((v1.position.x + 1) * 0.5f * width);
-	int screenV1y = int((-v1.position.y + 1) * 0.5f * height);
-	int screenV2x = int((v2.position.x + 1) * 0.5f * width);
-	int screenV2y = int((-v2.position.y + 1) * 0.5f * height);
+	float iw0 = 1.0f / v0.position.w;
+	float iw1 = 1.0f / v1.position.w;
+	float iw2 = 1.0f / v2.position.w;
+	int screenV0x = int((v0.position.x * iw0 + 1) * 0.5f * width);
+	int screenV0y = int((-v0.position.y * iw0 + 1) * 0.5f * height);
+	int screenV1x = int((v1.position.x * iw1 + 1) * 0.5f * width);
+	int screenV1y = int((-v1.position.y * iw1 + 1) * 0.5f * height);
+	int screenV2x = int((v2.position.x * iw2 + 1) * 0.5f * width);
+	int screenV2y = int((-v2.position.y * iw2 + 1) * 0.5f * height);
 
 	int minx = min_i(screenV0x, min_i(screenV1x, screenV2x));
 	int miny = min_i(screenV0y, min_i(screenV1y, screenV2y));

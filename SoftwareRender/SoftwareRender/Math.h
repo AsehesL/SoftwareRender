@@ -1178,6 +1178,13 @@ public:
 			return m33;
 		}
 	}
+	Vector4 operator * (const Vector4& vector) const
+	{
+		return Vector4(vector.x * m00 + vector.y * m01 + vector.z * m02 + vector.w * m03,
+			vector.x * m10 + vector.y * m11 + vector.z * m12 + vector.w * m13,
+			vector.x * m20 + vector.y * m21 + vector.z * m22 + vector.w * m23,
+			vector.x * m30 + vector.y * m31 + vector.z * m32 + vector.w * m33);
+	}
 	friend Vector4 operator*(const Vector4& vector, const Matrix& matrix)
 	{
 		return Vector4(vector.x *matrix.m00 + vector.y *matrix.m10 + vector.z * matrix.m20 + vector.w*matrix.m30,
@@ -1188,9 +1195,9 @@ public:
 
 	void transform_vector(const Vector3& vector, Vector3& out) const
 	{
-		float x = vector.x * m00 + vector.y * m10 + vector.z * m20;
-		float y = vector.x * m01 + vector.y * m11 + vector.z * m21;
-		float z = vector.x * m02 + vector.y * m12 + vector.z * m22;
+		float x = vector.x * m00 + vector.y * m01 + vector.z * m02;
+		float y = vector.x * m10 + vector.y * m11 + vector.z * m12;
+		float z = vector.x * m20 + vector.y * m21 + vector.z * m22;
 
 		out.x = x;
 		out.y = y;
@@ -1198,10 +1205,10 @@ public:
 	}
 	void transform_point(const Vector3& vector, Vector3& out) const
 	{
-		float x = vector.x * m00 + vector.y * m10 + vector.z * m20 + m30;
-		float y = vector.x * m01 + vector.y * m11 + vector.z * m21 + m31;
-		float z = vector.x * m02 + vector.y * m12 + vector.z * m22 + m32;
-		float w = vector.x * m03 + vector.y * m13 + vector.z * m23 + m33;
+		float x = vector.x * m00 + vector.y * m01 + vector.z * m02 + m03;
+		float y = vector.x * m10 + vector.y * m11 + vector.z * m12 + m13;
+		float z = vector.x * m20 + vector.y * m21 + vector.z * m22 + m23;
+		float w = vector.x * m30 + vector.y * m31 + vector.z * m32 + m33;
 
 		if (IS_FLOAT_EQUAL(w, 0.0f)) {
 			out.x = NAN;
@@ -1395,43 +1402,43 @@ public:
 		float delta = farplane - nearplane;
 
 		matrix->m00 = cotfov / aspect;
-		matrix->m01 = 0.0f;
-		matrix->m02 = 0.0f;
-		matrix->m03 = 0.0f;
-
 		matrix->m10 = 0.0f;
-		matrix->m11 = cotfov;
-		matrix->m12 = 0.0f;
-		matrix->m13 = 0.0f;
-
 		matrix->m20 = 0.0f;
-		matrix->m21 = 0.0f;
-		matrix->m22 = -(farplane + nearplane) / delta;
-		matrix->m23 = -1.0f;
-
 		matrix->m30 = 0.0f;
+
+		matrix->m01 = 0.0f;
+		matrix->m11 = cotfov;
+		matrix->m21 = 0.0f;
 		matrix->m31 = 0.0f;
-		matrix->m32 = -2.0f*nearplane*farplane / delta;
+
+		matrix->m02 = 0.0f;
+		matrix->m12 = 0.0f;
+		matrix->m22 = -(farplane + nearplane) / delta;
+		matrix->m32 = -1.0f;
+
+		matrix->m03 = 0.0f;
+		matrix->m13 = 0.0f;
+		matrix->m23 = -2.0f*nearplane*farplane / delta;
 		matrix->m33 = 0.0f;
 	}
 	static void ortho(Matrix* matrix, float width, float height, float nearplane, float farplane)
 	{
 		float fn = 1.0f / (farplane - nearplane);
 		matrix->m00 = 2.0f / width;
-		matrix->m01 = 0.0f;
-		matrix->m02 = 0.0f;
-		matrix->m03 = 0.0f;
 		matrix->m10 = 0.0f;
-		matrix->m11 = 2.0f / height;
-		matrix->m12 = 0.0f;
-		matrix->m13 = 0.0f;
 		matrix->m20 = 0.0f;
-		matrix->m21 = 0.0f;
-		matrix->m22 = -2.0f*fn;
-		matrix->m23 = 0.0f;
 		matrix->m30 = 0.0f;
+		matrix->m01 = 0.0f;
+		matrix->m11 = 2.0f / height;
+		matrix->m21 = 0.0f;
 		matrix->m31 = 0.0f;
-		matrix->m32 = -(farplane + nearplane)*fn;
+		matrix->m02 = 0.0f;
+		matrix->m12 = 0.0f;
+		matrix->m22 = -2.0f*fn;
+		matrix->m32 = 0.0f;
+		matrix->m03 = 0.0f;
+		matrix->m13 = 0.0f;
+		matrix->m23 = -(farplane + nearplane)*fn;
 		matrix->m33 = 1.0f;
 	}
 	static void identity(Matrix*matrix)
@@ -1480,21 +1487,21 @@ public:
 		matrix->m00 = 1;
 		matrix->m01 = 0;
 		matrix->m02 = 0;
-		matrix->m03 = 0;
+		matrix->m03 = x;
 
 		matrix->m10 = 0;
 		matrix->m11 = 1;
 		matrix->m12 = 0;
-		matrix->m13 = 0;
+		matrix->m13 = y;
 
 		matrix->m20 = 0;
 		matrix->m21 = 0;
 		matrix->m22 = 1;
-		matrix->m23 = 0;
+		matrix->m23 = z;
 
-		matrix->m30 = x;
-		matrix->m31 = y;
-		matrix->m32 = z;
+		matrix->m30 = 0;
+		matrix->m31 = 0;
+		matrix->m32 = 0;
 		matrix->m33 = 1;
 	}
 	static void rotate_x(Matrix* matrix, float angle)
@@ -1502,20 +1509,20 @@ public:
 		float cosag = cosf(angle);
 		float sinag = sinf(angle);
 		matrix->m00 = 1.0f;
-		matrix->m01 = 0.0f;
-		matrix->m02 = 0.0f;
-		matrix->m03 = 0.0f;
 		matrix->m10 = 0.0f;
-		matrix->m11 = cosag;
-		matrix->m12 = sinag;
-		matrix->m13 = 0.0f;
 		matrix->m20 = 0.0f;
-		matrix->m21 = -sinag;
-		matrix->m22 = cosag;
-		matrix->m23 = 0.0f;
 		matrix->m30 = 0.0f;
+		matrix->m01 = 0.0f;
+		matrix->m11 = cosag;
+		matrix->m21 = sinag;
 		matrix->m31 = 0.0f;
+		matrix->m02 = 0.0f;
+		matrix->m12 = -sinag;
+		matrix->m22 = cosag;
 		matrix->m32 = 0.0f;
+		matrix->m03 = 0.0f;
+		matrix->m13 = 0.0f;
+		matrix->m23 = 0.0f;
 		matrix->m33 = 1.0f;
 	}
 	static void rotate_y(Matrix* matrix, float angle)
@@ -1523,20 +1530,20 @@ public:
 		float cosag = cosf(angle);
 		float sinag = sinf(angle);
 		matrix->m00 = cosag;
-		matrix->m01 = 0.0f;
-		matrix->m02 = -sinag;
-		matrix->m03 = 0.0f;
 		matrix->m10 = 0.0f;
-		matrix->m11 = 1.0f;
-		matrix->m12 = 0.0f;
-		matrix->m13 = 0.0f;
-		matrix->m20 = sinag;
-		matrix->m21 = 0.0f;
-		matrix->m22 = cosag;
-		matrix->m23 = 0.0f;
+		matrix->m20 = -sinag;
 		matrix->m30 = 0.0f;
+		matrix->m01 = 0.0f;
+		matrix->m11 = 1.0f;
+		matrix->m21 = 0.0f;
 		matrix->m31 = 0.0f;
+		matrix->m02 = sinag;
+		matrix->m12 = 0.0f;
+		matrix->m22 = cosag;
 		matrix->m32 = 0.0f;
+		matrix->m03 = 0.0f;
+		matrix->m13 = 0.0f;
+		matrix->m23 = 0.0f;
 		matrix->m33 = 1.0f;
 	}
 	static void rotate_z(Matrix* matrix, float angle)
@@ -1544,20 +1551,20 @@ public:
 		float cosag = cosf(angle);
 		float sinag = sinf(angle);
 		matrix->m00 = cosag;
-		matrix->m01 = sinag;
-		matrix->m02 = 0.0f;
-		matrix->m03 = 0.0f;
-		matrix->m10 = -sinag;
-		matrix->m11 = cosag;
-		matrix->m12 = 0.0f;
-		matrix->m13 = 0.0f;
+		matrix->m10 = sinag;
 		matrix->m20 = 0.0f;
-		matrix->m21 = 0.0f;
-		matrix->m22 = 1.0f;
-		matrix->m23 = 0.0f;
 		matrix->m30 = 0.0f;
+		matrix->m01 = -sinag;
+		matrix->m11 = cosag;
+		matrix->m21 = 0.0f;
 		matrix->m31 = 0.0f;
+		matrix->m02 = 0.0f;
+		matrix->m12 = 0.0f;
+		matrix->m22 = 1.0f;
 		matrix->m32 = 0.0f;
+		matrix->m03 = 0.0f;
+		matrix->m13 = 0.0f;
+		matrix->m23 = 0.0f;
 		matrix->m33 = 1.0f;
 	}
 	static void rotate(Matrix* matrix, const Quaternion& rotation)
@@ -1572,20 +1579,20 @@ public:
 		float yw = 2.0f*rotation.y*rotation.w;
 		float zw = 2.0f*rotation.z*rotation.w;
 		matrix->m00 = 1.0f - y2 - z2;
-		matrix->m01 = xy + zw;
-		matrix->m02 = xz - yw;
-		matrix->m03 = 0.0f;
-		matrix->m10 = xy - zw;
-		matrix->m11 = 1.0f - x2 - z2;
-		matrix->m12 = yz + xw;
-		matrix->m13 = 0.0f;
-		matrix->m20 = xz + yw;
-		matrix->m21 = yz - xw;
-		matrix->m22 = 1.0f - x2 - y2;
-		matrix->m23 = 0.0f;
+		matrix->m10 = xy + zw;
+		matrix->m20 = xz - yw;
 		matrix->m30 = 0.0f;
+		matrix->m01 = xy - zw;
+		matrix->m11 = 1.0f - x2 - z2;
+		matrix->m21 = yz + xw;
 		matrix->m31 = 0.0f;
+		matrix->m02 = xz + yw;
+		matrix->m12 = yz - xw;
+		matrix->m22 = 1.0f - x2 - y2;
 		matrix->m32 = 0.0f;
+		matrix->m03 = 0.0f;
+		matrix->m13 = 0.0f;
+		matrix->m23 = 0.0f;
 		matrix->m33 = 1.0f;
 	}
 	static void TRS(Matrix*matrix, const Vector3&position, const Quaternion&rotation, const Vector3&scale)
@@ -1610,20 +1617,20 @@ public:
 		float ri = 1.0f - x2 - y2;
 
 		matrix->m00 = scale.x*ra;
-		matrix->m01 = scale.x*rb;
-		matrix->m02 = scale.x*rc;
-		matrix->m03 = 0.0f;
-		matrix->m10 = scale.y*rd;
+		matrix->m10 = scale.x*rb;
+		matrix->m20 = scale.x*rc;
+		matrix->m30 = 0.0f;
+		matrix->m01 = scale.y*rd;
 		matrix->m11 = scale.y*re;
-		matrix->m12 = scale.y*rf;
-		matrix->m13 = 0.0f;
-		matrix->m20 = scale.z*rg;
-		matrix->m21 = scale.z*rh;
+		matrix->m21 = scale.y*rf;
+		matrix->m31 = 0.0f;
+		matrix->m02 = scale.z*rg;
+		matrix->m12 = scale.z*rh;
 		matrix->m22 = scale.z*ri;
-		matrix->m23 = 0.0f;
-		matrix->m30 = position.x;
-		matrix->m31 = position.y;
-		matrix->m32 = position.z;
+		matrix->m32 = 0.0f;
+		matrix->m03 = position.x;
+		matrix->m13 = position.y;
+		matrix->m23 = position.z;
 		matrix->m33 = 1.0f;
 	}
 	//static void TRS(DMatrix4x4*, DVector3* right, DVector3* up, DVector3* forward, const DVector3&, const DQuaterion&, const DVector3&);
@@ -1636,24 +1643,24 @@ public:
 		Vector3::cross(z, x, y);
 
 		matrix->m00 = x.x;
-		matrix->m10 = x.y;
-		matrix->m20 = x.z;
+		matrix->m01 = x.y;
+		matrix->m02 = x.z;
 
-		matrix->m01 = y.x;
+		matrix->m10 = y.x;
 		matrix->m11 = y.y;
-		matrix->m21 = y.z;
+		matrix->m12 = y.z;
 
-		matrix->m02 = -z.x;
-		matrix->m12 = -z.y;
+		matrix->m20 = -z.x;
+		matrix->m21 = -z.y;
 		matrix->m22 = -z.z;
 
-		matrix->m30 = -Vector3::dot(x, eye);
-		matrix->m31 = -Vector3::dot(y, eye);
-		matrix->m32 = Vector3::dot(z, eye);
+		matrix->m03 = -Vector3::dot(x, eye);
+		matrix->m13 = -Vector3::dot(y, eye);
+		matrix->m23 = Vector3::dot(z, eye);
 
-		matrix->m03 = 0.0f;
-		matrix->m13 = 0.0f;
-		matrix->m23 = 0.0f;
+		matrix->m30 = 0.0f;
+		matrix->m31 = 0.0f;
+		matrix->m32 = 0.0f;
 		matrix->m33 = 1.0f;
 	}
 	static void transpose(Matrix* out, const Matrix& target)

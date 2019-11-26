@@ -41,9 +41,15 @@ bool Graphics::init(SDL_Window* window, int width, int height)
 	return true;
 }
 
-void Graphics::clear(ClearFlags clearflag)
+void Graphics::clear(int clearflag)
 {
-	for(int j=0;j<_height;j++)
+	int r = int(_clear_color.r * 255.0f);
+	int g = int(_clear_color.g * 255.0f);
+	int b = int(_clear_color.b * 255.0f);
+	int a = int(_clear_color.a * 255.0f);
+	UINT32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
+	SDL_FillRect(_surface, 0, ucolor);
+	/*for(int j=0;j<_height;j++)
 	{
 		for(int i=0;i<_width;i++)
 		{
@@ -56,7 +62,7 @@ void Graphics::clear(ClearFlags clearflag)
 				set_depth(i, j, 1);
 			}
 		}
-	}
+	}*/
 }
 
 void Graphics::clear_color(Color color)
@@ -114,6 +120,16 @@ void Graphics::draw_primitive(Primitive primitive)
 		draw_linestrips();
 		break;
 	}
+}
+
+void Graphics::set_zwrite(bool zwrite)
+{
+	_zwrite = zwrite;
+}
+
+void Graphics::set_ztest(CompareFunction ztest)
+{
+	_ztest = ztest;
 }
 
 void Graphics::set_pixel(int x, int y, Color color)
@@ -177,6 +193,19 @@ void Graphics::set_depth(int x, int y, float depth)
 	if (y < 0 || y >= _height)
 		return;
 	_zbuffer[y*_width + x] = depth;
+}
+
+float Graphics::get_depth(int x, int y)
+{
+	if(_renderbuffer != nullptr)
+	{
+		return _renderbuffer->get_depth(x, y);
+	}
+	if (x < 0 || x >= _width)
+		return 1;
+	if (y < 0 || y >= _height)
+		return 1;
+	return _zbuffer[y * _width + x];
 }
 
 void Graphics::draw_points()
@@ -308,12 +337,13 @@ void Graphics::draw_linestrips()
 void Graphics::rasterize_fragment(int x, int y, FragmentInput& frag)
 {
 	Color outcolor;
+	float depth = frag.position.z / frag.position.w * 0.5f + 0.5f;
+
 	if(_shader->frag(frag, outcolor))
 	{
 		set_pixel(x, y, outcolor);
+		if (_zwrite) {
+			set_depth(x, y, depth);
+		}
 	}
 }
-
-//void Graphics::draw_point(int)
-//{
-//}
