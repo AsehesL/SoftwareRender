@@ -43,12 +43,17 @@ bool Graphics::init(SDL_Window* window, int width, int height)
 
 void Graphics::clear(int clearflag)
 {
-	int r = int(_clear_color.r * 255.0f);
-	int g = int(_clear_color.g * 255.0f);
-	int b = int(_clear_color.b * 255.0f);
-	int a = int(_clear_color.a * 255.0f);
-	UINT32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
-	SDL_FillRect(_surface, 0, ucolor);
+	if ((clearflag & ClearFlags_Color) != 0) {
+		int r = int(_clear_color.r * 255.0f);
+		int g = int(_clear_color.g * 255.0f);
+		int b = int(_clear_color.b * 255.0f);
+		int a = int(_clear_color.a * 255.0f);
+		UINT32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
+		SDL_FillRect(_surface, 0, ucolor);
+	}
+	if ((clearflag & ClearFlags_Depth) != 0) {
+		memset(_zbuffer, 1, sizeof(_zbuffer));
+	}
 	/*for(int j=0;j<_height;j++)
 	{
 		for(int i=0;i<_width;i++)
@@ -195,6 +200,38 @@ void Graphics::set_depth(int x, int y, float depth)
 	_zbuffer[y*_width + x] = depth;
 }
 
+Color Graphics::get_pixel(int x, int y)
+{
+	int bpp = _surface->format->BytesPerPixel;
+
+	Uint8 *p = (Uint8 *)_surface->pixels + y * _surface->pitch + x * bpp;
+	Uint8 r, g, b, a;
+
+	switch (bpp) {
+	case 1:
+		SDL_GetRGBA( *p, _surface->format, &r, &g, &b, &a);
+		break;
+	case 2:
+		SDL_GetRGBA(*(Uint16 *)p, _surface->format, &r, &g, &b, &a);
+		break;
+
+	case 3:
+		if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+			SDL_GetRGBA(p[0] << 16 | p[1] << 8 | p[2], _surface->format, &r, &g, &b, &a);
+		else
+			SDL_GetRGBA(p[0] | p[1] << 8 | p[2] << 16, _surface->format, &r, &g, &b, &a);
+		break;
+
+	case 4:
+		SDL_GetRGBA(*(Uint32 *)p, _surface->format, &r, &g, &b, &a);
+		break;
+
+	default:
+		break;
+	}
+	return Color::rgba32(r, g, b, a);
+}
+
 float Graphics::get_depth(int x, int y)
 {
 	if(_renderbuffer != nullptr)
@@ -228,6 +265,8 @@ void Graphics::draw_points()
 
 		_shader->vert(vertex, output[0]);
 
+		if (frustumculling(output, 1) == false)
+			return;
 
 		_point_rasterization->rasterize(this, output, _width, _height);
 		
@@ -268,6 +307,9 @@ void Graphics::draw_triangles()
 		_shader->vert(vertex1, output[1]);
 		_shader->vert(vertex2, output[2]);
 
+		if (frustumculling(output, 3) == false)
+			return;
+
 		_triangle_rasterization->rasterize(this, output, _width, _height);
 	}
 }
@@ -298,6 +340,9 @@ void Graphics::draw_lines()
 
 		_shader->vert(vertex0, output[0]);
 		_shader->vert(vertex1, output[1]);
+
+		if (frustumculling(output, 2) == false)
+			return;
 
 		_line_rasterization->rasterize(this, output, _width, _height);
 	}
@@ -330,20 +375,57 @@ void Graphics::draw_linestrips()
 		_shader->vert(vertex0, output[0]);
 		_shader->vert(vertex1, output[1]);
 
+		if (frustumculling(output, 2) == false)
+			return;
+
 		_line_rasterization->rasterize(this, output, _width, _height);
 	}
+}
+
+bool Graphics::buffer_compare(CompareFunction func, float current, float target)
+{
+	switch (func)
+	{
+	case CompareFunction_Always:
+		return true;
+	case CompareFunction_Equal:
+		return IS_FLOAT_EQUAL(current, target);
+	case CompareFunction_Greater:
+		return current > target;
+	case CompareFunction_Less:
+		return current < target;
+	case CompareFunction_GreaterEqual:
+		return current > target || IS_FLOAT_EQUAL(current, target);
+	case CompareFunction_LessEqual:
+		return current < target || IS_FLOAT_EQUAL(current, target);
+	case CompareFunction_Never:
+		return false;
+	case CompareFunction_NotEqual:
+		return IS_FLOAT_EQUAL(current, target) == false;
+	}
+	return false;
 }
 
 void Graphics::rasterize_fragment(int x, int y, FragmentInput& frag)
 {
 	Color outcolor;
 	float depth = frag.position.z / frag.position.w * 0.5f + 0.5f;
+	float targetdepth = get_depth(x, y);
 
-	if(_shader->frag(frag, outcolor))
-	{
-		set_pixel(x, y, outcolor);
-		if (_zwrite) {
-			set_depth(x, y, depth);
+	if (buffer_compare(_ztest, depth, targetdepth)) {
+		if (_shader->frag(frag, outcolor))
+		{
+			if(_blend)
+			{
+				Color dst = get_pixel(x, y);
+				Color outc = blend_color(outcolor, dst, _src, _dst);
+				set_pixel(x, y, outc);
+			}
+			else
+				set_pixel(x, y, outcolor);
+			if (_zwrite) {
+				set_depth(x, y, depth);
+			}
 		}
 	}
 }

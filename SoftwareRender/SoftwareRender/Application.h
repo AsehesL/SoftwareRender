@@ -1,6 +1,5 @@
 #pragma once
 #include "Graphics.h"
-#include "ColorShader.h"
 
 extern "C" {
 #include "SDL.h"
@@ -22,9 +21,5 @@ private:
 public:
 	Graphics* graphics;
 	SDL_Window* window;
-	ColorShader* testshader;
-	Vector3* _vertex;
-	Color* _colors;
-	unsigned int* _triangles;
 };
 

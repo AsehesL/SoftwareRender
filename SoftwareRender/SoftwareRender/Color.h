@@ -256,6 +256,25 @@ public:
 		}
 	}
 
+	static Color rgba32(unsigned int r, unsigned int g, unsigned int b, unsigned int a)
+	{
+		float iv = 1.0f / 255.0f;
+		float rfloat = float(iv * r);
+		float gfloat = float(iv * g);
+		float bfloat = float(iv * b);
+		float afloat = float(iv * a);
+		return Color(rfloat, gfloat, bfloat, afloat);
+	}
+
+	static Color rgb24(unsigned int r, unsigned int g, unsigned int b)
+	{
+		float iv = 1.0f / 255.0f;
+		float rfloat = float(iv * r);
+		float gfloat = float(iv * g);
+		float bfloat = float(iv * b);
+		return Color(rfloat, gfloat, bfloat, 1.0f);
+	}
+
 private:
 	static void rgb_to_hsv_internal(float offset, float dominantcolor, float colorone, float colortwo, float& h, float& s, float& v)
 	{
