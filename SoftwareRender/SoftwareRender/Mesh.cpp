@@ -19,6 +19,8 @@ Mesh::~Mesh()
 
 void Mesh::set_vertices(Vector3* vertices, int vertexcount)
 {
+	if (_vertices != nullptr)
+		delete[] _vertices;
 	_vertices = vertices;
 	if (_vertices == nullptr)
 		vertexcount = 0;
@@ -27,11 +29,15 @@ void Mesh::set_vertices(Vector3* vertices, int vertexcount)
 
 void Mesh::set_colors(Color* colors)
 {
+	if (_colors != nullptr)
+		delete[] _colors;
 	_colors = colors;
 }
 
 void Mesh::set_indices(unsigned* indices, int indexcount)
 {
+	if (_indices != nullptr)
+		delete[] _indices;
 	_indices = indices;
 	if (_indices == nullptr)
 		indexcount = 0;

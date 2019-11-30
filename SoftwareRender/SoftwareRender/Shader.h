@@ -39,5 +39,14 @@ public:
 	~Shader();
 	virtual void vert(const VertexInput& in, FragmentInput& out) = 0;
 	virtual bool frag(const FragmentInput& in, Color& out) = 0;
+
+	void set_model_matrix(Matrix matrix);
+	void set_view_matrix(Matrix matrix);
+	void set_projection_matrix(Matrix matrix);
+
+protected:
+	Matrix _model_matrix;
+	Matrix _view_matrix;
+	Matrix _proj_matrix;
 };
 

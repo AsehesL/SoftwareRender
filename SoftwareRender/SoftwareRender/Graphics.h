@@ -42,7 +42,6 @@ enum BlendMode
 	BlendMode_OneMinusSrcColor,
 	BlendMode_DstAlpha,
 	BlendMode_OneMinusDstAlpha,
-	BlendMode_SrcAlphaSaturate,
 	BlendMode_OneMinusSrcAlpha,
 };
 
@@ -89,17 +88,17 @@ public:
 	void set_blendmode(BlendMode src, BlendMode dst);
 	void set_blend(bool);
 	void set_cullmode(CullMode cullmode);
-	void set_stenciltest(bool);
+	/*void set_stenciltest(bool);
 	void set_stencilId(int);
 	void set_stenciltest(CompareFunction);
 	void set_stencilpass(StencilOp);
 	void set_stencilfail(StencilOp);
 	void set_stencilzfail(StencilOp);
 	void set_stencilreadmask(unsigned int);
-	void set_stencilwritemask(unsigned int);
+	void set_stencilwritemask(unsigned int);*/
 
-	float get_width() { return _width; }
-	float get_height() { return _height; }
+	int get_width() { return _width; }
+	int get_height() { return _height; }
 
 private:
 	void set_pixel(int x, int y, Color color);
@@ -113,6 +112,7 @@ private:
 	static bool buffer_compare(CompareFunction func, float current, float target);
 	static Color blend_color(const Color& srccolor, const Color& dstcolor, BlendMode srcfactor, BlendMode dstfactor);
 	static bool frustumculling(FragmentInput* inputs, int count);
+	static Color get_blend_factor(const Color& srccolor, const Color& dstcolor, BlendMode factor);
 
 	void rasterize_fragment(int x, int y, FragmentInput& frag) override;
 	
@@ -125,6 +125,7 @@ private:
 	Color* _colordata;
 	unsigned int* _indexdata;
 	SDL_Surface* _surface;
+
 	int _width, _height;
 	Color _clear_color;
 	int _vertexcount, _colorcount, _indexcount;
@@ -135,5 +136,6 @@ private:
 	bool _zwrite;
 	bool _blend;
 	BlendMode _src, _dst;
+	CullMode _cullmode;
 };
 

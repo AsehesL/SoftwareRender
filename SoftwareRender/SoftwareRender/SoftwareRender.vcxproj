@@ -156,7 +156,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ColorShader.cpp" />
+    <ClCompile Include="DisplayObject.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Rasterization.cpp" />
@@ -166,8 +168,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="ColorShader.h" />
+    <ClInclude Include="DisplayObject.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Mesh.h" />

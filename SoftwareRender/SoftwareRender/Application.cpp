@@ -27,27 +27,43 @@ bool Application::init(int width, int height, const char * applicationName)
 	{
 		return false;
 	}
-	_vertex = new Vector3[8] {
+
+	_mesh = new Mesh();
+	_mesh->set_vertices(new Vector3[8]{
 			Vector3(-0.5f, -0.5f, -0.5f), Vector3(-0.5f, 0.5f, -0.5f), Vector3(0.5f, 0.5f, -0.5f), Vector3(0.5f, -0.5f, -0.5f),
 			Vector3(-0.5f, -0.5f, 0.5f), Vector3(-0.5f, 0.5f, 0.5f), Vector3(0.5f, 0.5f, 0.5f), Vector3(0.5f, -0.5f, 0.5f),
-	};
-	_colors = new Color[8] {
+		}, 8);
+	_mesh->set_colors(new Color[8]{
 		Color(0.0f,0.0f,0.0f,1.0f), Color(1.0f,0.0f,0.0f,1.0f), Color(1.0f,1.0f,0.0f,1.0f), Color(0.0f,1.0f,0.0f,1.0f),
 		Color(0.0f,0.0f,1.0f,1.0f), Color(1.0f,0.0f,1.0f,1.0f), Color(1.0f,1.0f,1.0f,1.0f), Color(0.0f,1.0f,1.0f,1.0f),
-	};
-	_triangles = new unsigned int[36] {
+		});
+	_mesh->set_indices(new unsigned int[36]{
 		0, 1, 2, 0, 2, 3,
 			1, 5, 6, 1, 6, 2,
 			5, 4, 7, 5, 7, 6,
 			4, 0, 3, 4, 3, 7,
 			4, 5, 1, 4, 1, 0,
 			3, 2, 6, 3, 6, 7,
-	};
-	testshader = new ColorShader();
-	graphics->bind_vertexdata(_vertex, 8);
-	graphics->bind_colordata(_colors, 8);
-	graphics->bind_indexdata(_triangles, 36);
-	graphics->set_shader(testshader);
+		}, 36);
+	_shader = new ColorShader();
+	_obj1 = new DisplayObject(_mesh, _shader);
+	_obj2 = new DisplayObject(_mesh, _shader);
+	_camera = new Camera(width, height);
+	_camera->position = Vector3(-8.365381f, 25.30562f, -15.46281f);
+	_camera->euler = Vector3(28.808f, -145.76f, 0.0f);
+
+	_obj1->position = Vector3(-9.640829f, 24.16714f, -17.43065f);
+	_obj1->euler = Vector3(-70.339f, 96.92001f, -49.959f);
+	_obj2->position = Vector3(-10.76f, 23.73f, -20.55f);
+	_obj2->euler = Vector3(8.554001f, -103.278f, 95.492f);
+
+	graphics->set_zwrite(false);
+	graphics->set_blend(true);
+	graphics->set_blendmode(BlendMode_One, BlendMode_One);
+
+	_camera->prepare_render();
+	_obj1->draw(graphics);
+	_obj2->draw(graphics);
 
 	SDL_UpdateWindowSurface(window);
 	return true;
@@ -95,31 +111,15 @@ void Application::close()
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
-	delete testshader;
-	delete[] _vertex;
-	delete[] _colors;
-	delete[] _triangles;
+	delete _mesh;
+	delete _shader;
+	delete _obj1;
+	delete _obj2;
+	delete _camera;
 }
 
 bool Application::application_loop(float time)
 {
-	Matrix localtoworld, worldtocamera, projection;
-	Vector3 pos(-0.2846542f, -1.165807f, 2.7674f);
-	Quaternion rot;
-	Quaternion::euler(&rot, 22.19f, time, 20.05f);
-	Vector3 scale(1, 1, 1);
-	Matrix::TRS(&localtoworld, pos, rot, scale);
-	Matrix::lookat(&worldtocamera, Vector3(0.9647f, 0.1606f, 4.2133f), Vector3(0.9647f - 0.5050f, 0.1606f - 0.5978f, 4.2133f - 0.6225f), Vector3(-0.3767f, 0.8016f, -0.4643f));
-	Matrix::perspective(&projection, 60 * DEG_TO_RAD, ((float)graphics->get_width()) / graphics->get_height(), 0.3f, 1000.0f);
-	testshader->set_model_matrix(localtoworld);
-	testshader->set_view_matrix(worldtocamera);
-	testshader->set_projection_matrix(projection);
-
-	graphics->clear_color(Color(0, 0, 0, 1));
-	graphics->clear(ClearFlags_Color | ClearFlags_Depth);
-	graphics->set_shader(testshader);
-	graphics->draw_primitive(Primitive_LineStrip);
-	
 
 	return true;
 }

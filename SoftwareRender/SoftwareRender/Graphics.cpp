@@ -10,6 +10,16 @@ Graphics::Graphics()
 	_vertexdata = 0;
 	_colordata = 0;
 	_indexdata = 0;
+	_zwrite = true;
+	_src = BlendMode_One;
+	_dst = BlendMode_Zero;
+	_ztest = CompareFunction_LessEqual;
+	_blend = false;
+	_point_rasterization = 0;
+	_line_rasterization = 0;
+	_triangle_rasterization = 0;
+	_cullmode = CullMode_Back;
+	_clear_color = Color(0, 0, 0, 1);
 }
 
 Graphics::~Graphics()
@@ -28,11 +38,13 @@ bool Graphics::init(SDL_Window* window, int width, int height)
 		MessageBox(NULL, L"窗口Surface创建失败", L"初始化失败", MB_ERR_INVALID_CHARS);
 		return false;
 	}
-	SDL_FillRect(_surface, 0, 0);
+	//SDL_FillRect(_surface, 0, 0);
 
-	_zbuffer = new float[width*height];
+	_zbuffer = new float[width*height]();
 	_width = width;
 	_height = height;
+
+	clear(ClearFlags_Color | ClearFlags_Depth);
 
 	_point_rasterization = new PointRasterization();
 	_line_rasterization = new LineRasterization();
@@ -43,18 +55,23 @@ bool Graphics::init(SDL_Window* window, int width, int height)
 
 void Graphics::clear(int clearflag)
 {
-	if ((clearflag & ClearFlags_Color) != 0) {
-		int r = int(_clear_color.r * 255.0f);
-		int g = int(_clear_color.g * 255.0f);
-		int b = int(_clear_color.b * 255.0f);
-		int a = int(_clear_color.a * 255.0f);
-		UINT32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
-		SDL_FillRect(_surface, 0, ucolor);
+	//if ((clearflag & ClearFlags_Color) != 0) {
+	//	int r = int(_clear_color.r * 255.0f);
+	//	int g = int(_clear_color.g * 255.0f);
+	//	int b = int(_clear_color.b * 255.0f);
+	//	int a = int(_clear_color.a * 255.0f);
+	//	UINT32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
+	//	SDL_FillRect(_surface, 0, ucolor);
+	//	
+	//	//SDL_FillRect(t, 0, ucolor);
+	//}
+	//if ((clearflag & ClearFlags_Depth) != 0) {
+	//}
+	if (SDL_MUSTLOCK(_surface)) {
+		if (SDL_LockSurface(_surface) < 0)
+			return;
 	}
-	if ((clearflag & ClearFlags_Depth) != 0) {
-		memset(_zbuffer, 1, sizeof(_zbuffer));
-	}
-	/*for(int j=0;j<_height;j++)
+	for(int j=0;j<_height;j++)
 	{
 		for(int i=0;i<_width;i++)
 		{
@@ -67,7 +84,10 @@ void Graphics::clear(int clearflag)
 				set_depth(i, j, 1);
 			}
 		}
-	}*/
+	}
+	if (SDL_MUSTLOCK(_surface)) {
+		SDL_UnlockSurface(_surface);
+	}
 }
 
 void Graphics::clear_color(Color color)
@@ -127,14 +147,30 @@ void Graphics::draw_primitive(Primitive primitive)
 	}
 }
 
-void Graphics::set_zwrite(bool zwrite)
+void Graphics::set_zwrite(bool enable)
 {
-	_zwrite = zwrite;
+	_zwrite = enable;
 }
 
 void Graphics::set_ztest(CompareFunction ztest)
 {
 	_ztest = ztest;
+}
+
+void Graphics::set_blendmode(BlendMode src, BlendMode dst)
+{
+	_src = src;
+	_dst = dst;
+}
+
+void Graphics::set_blend(bool enable)
+{
+	_blend = enable;
+}
+
+void Graphics::set_cullmode(CullMode cullmode)
+{
+	_cullmode = cullmode;
 }
 
 void Graphics::set_pixel(int x, int y, Color color)
@@ -149,6 +185,22 @@ void Graphics::set_pixel(int x, int y, Color color)
 	int g = int(color.g * 255.0f);
 	int b = int(color.b * 255.0f);
 	int a = int(color.a * 255.0f);
+	if (r < 0)
+		r = 0;
+	else if (r > 255)
+		r = 255;
+	if (g < 0)
+		g = 0;
+	else if (g > 255)
+		g = 255;
+	if (b < 0)
+		b = 0;
+	else if (b > 255)
+		b = 255;
+	if (a < 0)
+		a = 0;
+	else if (a > 255)
+		a = 255;
 	UINT32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
 
 	if (x < 0 || x >= _width)
@@ -212,7 +264,7 @@ Color Graphics::get_pixel(int x, int y)
 		SDL_GetRGBA( *p, _surface->format, &r, &g, &b, &a);
 		break;
 	case 2:
-		SDL_GetRGBA(*(Uint16 *)p, _surface->format, &r, &g, &b, &a);
+		SDL_GetRGBA(*((Uint16 *)p), _surface->format, &r, &g, &b, &a);
 		break;
 
 	case 3:
@@ -249,11 +301,16 @@ void Graphics::draw_points()
 {
 	if (_shader == nullptr)
 		return;
+	if (SDL_MUSTLOCK(_surface)) {
+		if (SDL_LockSurface(_surface) < 0)
+			return;
+	}
 	for (int i = 0; i < _indexcount; i += 1)
 	{
 		int index = _indexdata[i];
-		if (index >= _vertexcount)
-			return;
+		if (index >= _vertexcount) {
+			break;
+		}
 
 		VertexInput vertex;
 		vertex.vertex = _vertexdata[index];
@@ -266,10 +323,13 @@ void Graphics::draw_points()
 		_shader->vert(vertex, output[0]);
 
 		if (frustumculling(output, 1) == false)
-			return;
+			continue;
 
 		_point_rasterization->rasterize(this, output, _width, _height);
 		
+	}
+	if (SDL_MUSTLOCK(_surface)) {
+		SDL_UnlockSurface(_surface);
 	}
 }
 
@@ -277,17 +337,21 @@ void Graphics::draw_triangles()
 {
 	if (_shader == nullptr)
 		return;
+	if (SDL_MUSTLOCK(_surface)) {
+		if (SDL_LockSurface(_surface) < 0)
+			return;
+	}
 	for(int i=0;i<_indexcount-2;i+=3)
 	{
 		int i0 = _indexdata[i];
 		if (i0 >= _vertexcount)
-			return;
+			break;
 		int i1 = _indexdata[i + 1];
 		if (i1 >= _vertexcount)
-			return;
+			break;
 		int i2 = _indexdata[i + 2];
 		if (i2 >= _vertexcount)
-			return;
+			break;
 
 		VertexInput vertex0, vertex1, vertex2;
 		vertex0.vertex = _vertexdata[i0];
@@ -308,9 +372,12 @@ void Graphics::draw_triangles()
 		_shader->vert(vertex2, output[2]);
 
 		if (frustumculling(output, 3) == false)
-			return;
+			continue;;
 
 		_triangle_rasterization->rasterize(this, output, _width, _height);
+	}
+	if (SDL_MUSTLOCK(_surface)) {
+		SDL_UnlockSurface(_surface);
 	}
 }
 
@@ -318,14 +385,18 @@ void Graphics::draw_lines()
 {
 	if (_shader == nullptr)
 		return;
+	if (SDL_MUSTLOCK(_surface)) {
+		if (SDL_LockSurface(_surface) < 0)
+			return;
+	}
 	for (int i = 0; i < _indexcount-1; i += 2)
 	{
 		int i0 = _indexdata[i];
 		if (i0 >= _vertexcount)
-			return;
+			break;
 		int i1 = _indexdata[i + 1];
 		if (i1 >= _vertexcount)
-			return;
+			break;
 
 		VertexInput vertex0, vertex1;
 		vertex0.vertex = _vertexdata[i0];
@@ -342,9 +413,12 @@ void Graphics::draw_lines()
 		_shader->vert(vertex1, output[1]);
 
 		if (frustumculling(output, 2) == false)
-			return;
+			continue;
 
 		_line_rasterization->rasterize(this, output, _width, _height);
+	}
+	if (SDL_MUSTLOCK(_surface)) {
+		SDL_UnlockSurface(_surface);
 	}
 }
 
@@ -352,14 +426,18 @@ void Graphics::draw_linestrips()
 {
 	if (_shader == nullptr)
 		return;
+	if (SDL_MUSTLOCK(_surface)) {
+		if (SDL_LockSurface(_surface) < 0)
+			return;
+	}
 	for (int i = 0; i < _indexcount - 1; i += 1)
 	{
 		int i0 = _indexdata[i];
 		if (i0 >= _vertexcount)
-			return;
+			break;
 		int i1 = _indexdata[i + 1];
 		if (i1 >= _vertexcount)
-			return;
+			break;
 
 		VertexInput vertex0, vertex1;
 		vertex0.vertex = _vertexdata[i0];
@@ -376,9 +454,12 @@ void Graphics::draw_linestrips()
 		_shader->vert(vertex1, output[1]);
 
 		if (frustumculling(output, 2) == false)
-			return;
+			continue;
 
 		_line_rasterization->rasterize(this, output, _width, _height);
+	}
+	if (SDL_MUSTLOCK(_surface)) {
+		SDL_UnlockSurface(_surface);
 	}
 }
 
@@ -406,6 +487,72 @@ bool Graphics::buffer_compare(CompareFunction func, float current, float target)
 	return false;
 }
 
+Color Graphics::blend_color(const Color& srccolor, const Color& dstcolor, BlendMode srcfactor, BlendMode dstfactor)
+{
+	Color a = get_blend_factor(srccolor, dstcolor, srcfactor);
+	Color b = get_blend_factor(srccolor, dstcolor, dstfactor);
+
+	return srccolor * a + dstcolor * b;
+}
+
+bool Graphics::frustumculling(FragmentInput* inputs, int count)
+{
+	if (count <= 0)
+		return false;
+	float minx = inputs[0].position.x / inputs[0].position.w;
+	float maxx = minx;
+	float miny = inputs[0].position.y / inputs[0].position.w;
+	float maxy = miny;
+	float minz = inputs[0].position.z / inputs[0].position.w;
+	float maxz = minz;
+
+	for(int i=1;i<count;i++)
+	{
+		float x = inputs[i].position.x / inputs[i].position.w;
+		float y = inputs[i].position.y / inputs[i].position.w;
+		float z = inputs[i].position.z / inputs[i].position.w;
+
+		minx = min(x, minx);
+		maxx = max(x, maxx);
+		miny = min(y, miny);
+		maxy = max(y, maxy);
+		minz = min(z, minz);
+		maxz = max(z, maxz);
+	}
+
+	if (minx >= -1.0f && maxx <= 1.0f && miny >= -1.0f && maxy <= 1.0f && minz >= -1.0f && maxz <= 1.0f)
+		return true;
+	return false;
+}
+
+Color Graphics::get_blend_factor(const Color& srccolor, const Color& dstcolor, BlendMode factor)
+{
+	switch (factor)
+	{
+	case BlendMode_Zero:
+		return Color(0, 0, 0, 0);
+	case BlendMode_DstAlpha:
+		return Color(dstcolor.a, dstcolor.a, dstcolor.a, dstcolor.a);
+	case BlendMode_DstColor:
+		return dstcolor;
+	case BlendMode_One:
+		return Color(1, 1, 1, 1);
+	case BlendMode_OneMinusDstAlpha:
+		return Color(1.0f - dstcolor.a, 1.0f - dstcolor.a, 1.0f - dstcolor.a, 1.0f - dstcolor.a);
+	case BlendMode_OneMinusDstColor:
+		return Color(1.0f - dstcolor.r, 1.0f - dstcolor.g, 1.0f - dstcolor.b, 1.0f - dstcolor.a);
+	case BlendMode_OneMinusSrcAlpha:
+		return Color(1.0f - srccolor.a, 1.0f - srccolor.a, 1.0f - srccolor.a, 1.0f - srccolor.a);
+	case BlendMode_OneMinusSrcColor:
+		return Color(1.0f - srccolor.r, 1.0f - srccolor.g, 1.0f - srccolor.b, 1.0f - srccolor.a);
+	case BlendMode_SrcAlpha:
+		return Color(srccolor.a, srccolor.a, srccolor.a, srccolor.a);
+	case BlendMode_SrcColor:
+		return srccolor;
+	}
+	return Color(0, 0, 0, 0);
+}
+
 void Graphics::rasterize_fragment(int x, int y, FragmentInput& frag)
 {
 	Color outcolor;
@@ -418,6 +565,10 @@ void Graphics::rasterize_fragment(int x, int y, FragmentInput& frag)
 			if(_blend)
 			{
 				Color dst = get_pixel(x, y);
+				if(dst.r > 0.1 || dst.g > 0.1 || dst.b > 0.1)
+				{
+					int a;
+				}
 				Color outc = blend_color(outcolor, dst, _src, _dst);
 				set_pixel(x, y, outc);
 			}
@@ -427,5 +578,8 @@ void Graphics::rasterize_fragment(int x, int y, FragmentInput& frag)
 				set_depth(x, y, depth);
 			}
 		}
+	}else
+	{
+		return;
 	}
 }

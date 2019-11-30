@@ -29,18 +29,3 @@ bool ColorShader::frag(const FragmentInput& in, Color& out)
 	out = in.color;
 	return true;
 }
-
-void ColorShader::set_model_matrix(Matrix matrix)
-{
-	_model_matrix = matrix;
-}
-
-void ColorShader::set_view_matrix(Matrix matrix)
-{
-	_view_matrix = matrix;
-}
-
-void ColorShader::set_projection_matrix(Matrix matrix)
-{
-	_proj_matrix = matrix;
-}

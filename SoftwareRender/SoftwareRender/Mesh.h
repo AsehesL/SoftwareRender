@@ -23,5 +23,6 @@ private:
 	unsigned* _indices;
 	int _vertexcount;
 	int _indexcount;
+	
 };
 

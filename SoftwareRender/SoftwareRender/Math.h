@@ -1663,6 +1663,54 @@ public:
 		matrix->m32 = 0.0f;
 		matrix->m33 = 1.0f;
 	}
+
+	static void view(Matrix * matrix, const Vector3& position, const Quaternion& rotation)
+	{
+		float x2 = 2.0f * rotation.x * rotation.x;
+		float y2 = 2.0f * rotation.y * rotation.y;
+		float z2 = 2.0f * rotation.z * rotation.z;
+		float xy = 2.0f * rotation.x * rotation.y;
+		float xz = 2.0f * rotation.x * rotation.z;
+		float xw = 2.0f * rotation.x * rotation.w;
+		float yz = 2.0f * rotation.y * rotation.z;
+		float yw = 2.0f * rotation.y * rotation.w;
+		float zw = 2.0f * rotation.z * rotation.w;
+		float ra = 1.0f - y2 - z2;
+		float rb = xy + zw;
+		float rc = xz - yw;
+		float rd = xy - zw;
+		float re = 1.0f - x2 - z2;
+		float rf = yz + xw;
+		float rg = xz + yw;
+		float rh = yz - xw;
+		float ri = 1.0f - x2 - y2;
+
+		Vector3 x(ra, rb, rc);
+		Vector3 y(rd, re, rf);
+		Vector3 z(rg, rh, ri);
+
+		matrix->m00 = x.x;
+		matrix->m01 = x.y;
+		matrix->m02 = x.z;
+
+		matrix->m10 = y.x;
+		matrix->m11 = y.y;
+		matrix->m12 = y.z;
+
+		matrix->m20 = -z.x;
+		matrix->m21 = -z.y;
+		matrix->m22 = -z.z;
+
+		matrix->m03 = -Vector3::dot(x, position);
+		matrix->m13 = -Vector3::dot(y, position);
+		matrix->m23 = Vector3::dot(z, position);
+
+		matrix->m30 = 0.0f;
+		matrix->m31 = 0.0f;
+		matrix->m32 = 0.0f;
+		matrix->m33 = 1.0f;
+	}
+
 	static void transpose(Matrix* out, const Matrix& target)
 	{
 		out->m00 = target.m00;

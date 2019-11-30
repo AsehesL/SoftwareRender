@@ -1,5 +1,7 @@
 #pragma once
 #include "Graphics.h"
+#include "DisplayObject.h"
+#include "Camera.h"
 
 extern "C" {
 #include "SDL.h"
@@ -21,5 +23,10 @@ private:
 public:
 	Graphics* graphics;
 	SDL_Window* window;
+	DisplayObject* _obj1;
+	DisplayObject* _obj2;
+	Mesh* _mesh;
+	Shader* _shader;
+	Camera* _camera;
 };
 
