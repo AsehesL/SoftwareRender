@@ -2,6 +2,7 @@
 #include "Graphics.h"
 #include "DisplayObject.h"
 #include "Camera.h"
+#include "Texture.h"
 
 extern "C" {
 #include "SDL.h"
@@ -28,5 +29,6 @@ public:
 	Mesh* _mesh;
 	Shader* _shader;
 	Camera* _camera;
+	Texture* _tex;
 };
 

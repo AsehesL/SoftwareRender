@@ -1,6 +1,6 @@
 #include "Application.h"
 #include <windows.h>
-#include "ColorShader.h"
+#include "TextureShader.h"
 
 Application::Application()
 {
@@ -29,7 +29,7 @@ bool Application::init(int width, int height, const char * applicationName)
 	}
 
 	_mesh = new Mesh();
-	_mesh->set_vertices(new Vector3[8]{
+	/*_mesh->set_vertices(new Vector3[8]{
 			Vector3(-0.5f, -0.5f, -0.5f), Vector3(-0.5f, 0.5f, -0.5f), Vector3(0.5f, 0.5f, -0.5f), Vector3(0.5f, -0.5f, -0.5f),
 			Vector3(-0.5f, -0.5f, 0.5f), Vector3(-0.5f, 0.5f, 0.5f), Vector3(0.5f, 0.5f, 0.5f), Vector3(0.5f, -0.5f, 0.5f),
 		}, 8);
@@ -44,8 +44,16 @@ bool Application::init(int width, int height, const char * applicationName)
 			4, 0, 3, 4, 3, 7,
 			4, 5, 1, 4, 1, 0,
 			3, 2, 6, 3, 6, 7,
-		}, 36);
-	_shader = new ColorShader();
+		}, 36);*/
+	_mesh->set_vertices(new Vector3[24]{ Vector3(0.500f, -0.500f, 0.500f),Vector3(-0.500f, -0.500f, 0.500f),Vector3(0.500f, 0.500f, 0.500f),Vector3(-0.500f, 0.500f, 0.500f),Vector3(0.500f, 0.500f, -0.500f),Vector3(-0.500f, 0.500f, -0.500f),Vector3(0.500f, -0.500f, -0.500f),Vector3(-0.500f, -0.500f, -0.500f),Vector3(0.500f, 0.500f, 0.500f),Vector3(-0.500f, 0.500f, 0.500f),Vector3(0.500f, 0.500f, -0.500f),Vector3(-0.500f, 0.500f, -0.500f),Vector3(0.500f, -0.500f, -0.500f),Vector3(0.500f, -0.500f, 0.500f),Vector3(-0.500f, -0.500f, 0.500f),Vector3(-0.500f, -0.500f, -0.500f),Vector3(-0.500f, -0.500f, 0.500f),Vector3(-0.500f, 0.500f, 0.500f),Vector3(-0.500f, 0.500f, -0.500f),Vector3(-0.500f, -0.500f, -0.500f),Vector3(0.500f, -0.500f, -0.500f),Vector3(0.500f, 0.500f, -0.500f),Vector3(0.500f, 0.500f, 0.500f),Vector3(0.500f, -0.500f, 0.500f), }, 24);
+	_mesh->set_uvs(new Vector2[24]{ Vector2(0.000f, 0.000f),Vector2(1.000f, 0.000f),Vector2(0.000f, 1.000f),Vector2(1.000f, 1.000f),Vector2(0.000f, 1.000f),Vector2(1.000f, 1.000f),Vector2(0.000f, 1.000f),Vector2(1.000f, 1.000f),Vector2(0.000f, 0.000f),Vector2(1.000f, 0.000f),Vector2(0.000f, 0.000f),Vector2(1.000f, 0.000f),Vector2(0.000f, 0.000f),Vector2(0.000f, 1.000f),Vector2(1.000f, 1.000f),Vector2(1.000f, 0.000f),Vector2(0.000f, 0.000f),Vector2(0.000f, 1.000f),Vector2(1.000f, 1.000f),Vector2(1.000f, 0.000f),Vector2(0.000f, 0.000f),Vector2(0.000f, 1.000f),Vector2(1.000f, 1.000f),Vector2(1.000f, 0.000f), }, 0);
+	_mesh->set_indices(new unsigned int[36]{ 0,2,3,0,3,1,8,4,5,8,5,9,10,6,7,10,7,11,12,13,14,12,14,15,16,17,18,16,18,19,20,21,22,20,22,23, }, 36);
+	TextureShader* sd = new TextureShader();
+	_tex = new Texture();
+	if (!_tex->load("7.bmp"))
+		throw "ss";
+	sd->set_texture(_tex);
+	_shader = sd;
 	_obj1 = new DisplayObject(_mesh, _shader);
 	_obj2 = new DisplayObject(_mesh, _shader);
 	_camera = new Camera(width, height);
@@ -116,6 +124,7 @@ void Application::close()
 	delete _obj1;
 	delete _obj2;
 	delete _camera;
+	delete _tex;
 }
 
 bool Application::application_loop(float time)

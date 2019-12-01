@@ -165,6 +165,8 @@
     <ClCompile Include="RenderBuffer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SoftwareRender.cpp" />
+    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
@@ -178,6 +180,8 @@
     <ClInclude Include="Rasterization.h" />
     <ClInclude Include="RenderBuffer.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureShader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

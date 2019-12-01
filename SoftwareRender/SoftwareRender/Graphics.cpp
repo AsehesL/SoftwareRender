@@ -8,8 +8,19 @@ Graphics::Graphics()
 	_zbuffer = 0;
 	_shader = 0;
 	_vertexdata = 0;
+	_vertexcount = 0;
 	_colordata = 0;
+	_colorcount = 0;
+	_uv0data = 0;
+	_uv0count = 0;
+	_uv1data = 0;
+	_uv1count = 0;
+	_uv2data = 0;
+	_uv2count = 0;
+	_uv3data = 0;
+	_uv3count = 0;
 	_indexdata = 0;
+	_indexcount = 0;
 	_zwrite = true;
 	_src = BlendMode_One;
 	_dst = BlendMode_Zero;
@@ -113,6 +124,38 @@ void Graphics::bind_vertexdata(Vector3* data, int count)
 		_vertexcount = 0;
 }
 
+void Graphics::bind_texcoorddata(Vector2* data, int count, int channel)
+{
+	if(channel == 0)
+	{
+		_uv0data = data;
+		_uv0count = count;
+		if (_uv0data == nullptr)
+			_uv0count = 0;
+	}
+	else if(channel == 1)
+	{
+		_uv1data = data;
+		_uv1count = count;
+		if (_uv1data == nullptr)
+			_uv1count = 0;
+	}
+	else if (channel == 2)
+	{
+		_uv2data = data;
+		_uv2count = count;
+		if (_uv2data == nullptr)
+			_uv2count = 0;
+	}
+	else if (channel == 3)
+	{
+		_uv3data = data;
+		_uv3count = count;
+		if (_uv3data == nullptr)
+			_uv3count = 0;
+	}
+}
+
 void Graphics::bind_colordata(Color* data, int count)
 {
 	_colordata = data;
@@ -201,7 +244,7 @@ void Graphics::set_pixel(int x, int y, Color color)
 		a = 0;
 	else if (a > 255)
 		a = 255;
-	UINT32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
+	Uint32 ucolor = SDL_MapRGBA(_surface->format, r, g, b, a);
 
 	if (x < 0 || x >= _width)
 		return;
@@ -318,6 +361,18 @@ void Graphics::draw_points()
 		if (index < _colorcount)
 			vertex.color = _colordata[index];
 
+		if (index < _uv0count)
+			vertex.uv0 = _uv0data[index];
+
+		if (index < _uv1count)
+			vertex.uv1 = _uv1data[index];
+
+		if (index < _uv2count)
+			vertex.uv2 = _uv2data[index];
+
+		if (index < _uv3count)
+			vertex.uv3 = _uv3data[index];
+
 		FragmentInput output[1];
 
 		_shader->vert(vertex, output[0]);
@@ -365,6 +420,34 @@ void Graphics::draw_triangles()
 		if (i2 < _colorcount)
 			vertex2.color = _colordata[i2];
 
+		if (i0 < _uv0count)
+			vertex0.uv0 = _uv0data[i0];
+		if (i1 < _uv0count)
+			vertex1.uv0 = _uv0data[i1];
+		if (i2 < _uv0count)
+			vertex2.uv0 = _uv0data[i2];
+
+		if (i0 < _uv1count)
+			vertex0.uv1 = _uv1data[i0];
+		if (i1 < _uv1count)
+			vertex1.uv1 = _uv1data[i1];
+		if (i2 < _uv1count)
+			vertex2.uv1 = _uv1data[i2];
+
+		if (i0 < _uv2count)
+			vertex0.uv2 = _uv2data[i0];
+		if (i1 < _uv2count)
+			vertex1.uv2 = _uv2data[i1];
+		if (i2 < _uv2count)
+			vertex2.uv2 = _uv2data[i2];
+
+		if (i0 < _uv3count)
+			vertex0.uv3 = _uv3data[i0];
+		if (i1 < _uv3count)
+			vertex1.uv3 = _uv3data[i1];
+		if (i2 < _uv3count)
+			vertex2.uv3 = _uv3data[i2];
+		
 		FragmentInput output[3];
 
 		_shader->vert(vertex0, output[0]);
@@ -407,6 +490,26 @@ void Graphics::draw_lines()
 		if (i1 < _colorcount)
 			vertex1.color = _colordata[i1];
 
+		if (i0 < _uv0count)
+			vertex0.uv0 = _uv0data[i0];
+		if (i1 < _uv0count)
+			vertex1.uv0 = _uv0data[i1];
+
+		if (i0 < _uv1count)
+			vertex0.uv1 = _uv1data[i0];
+		if (i1 < _uv1count)
+			vertex1.uv1 = _uv1data[i1];
+
+		if (i0 < _uv2count)
+			vertex0.uv2 = _uv2data[i0];
+		if (i1 < _uv2count)
+			vertex1.uv2 = _uv2data[i1];
+
+		if (i0 < _uv3count)
+			vertex0.uv3 = _uv3data[i0];
+		if (i1 < _uv3count)
+			vertex1.uv3 = _uv3data[i1];
+
 		FragmentInput output[2];
 
 		_shader->vert(vertex0, output[0]);
@@ -447,6 +550,21 @@ void Graphics::draw_linestrips()
 			vertex0.color = _colordata[i0];
 		if (i1 < _colorcount)
 			vertex1.color = _colordata[i1];
+
+		if (i0 < _uv1count)
+			vertex0.uv1 = _uv1data[i0];
+		if (i1 < _uv1count)
+			vertex1.uv1 = _uv1data[i1];
+
+		if (i0 < _uv2count)
+			vertex0.uv2 = _uv2data[i0];
+		if (i1 < _uv2count)
+			vertex1.uv2 = _uv2data[i1];
+
+		if (i0 < _uv3count)
+			vertex0.uv3 = _uv3data[i0];
+		if (i1 < _uv3count)
+			vertex1.uv3 = _uv3data[i1];
 
 		FragmentInput output[2];
 

@@ -78,6 +78,7 @@ public:
 	void set_shader(Shader* shader);
 
 	void bind_vertexdata(Vector3*, int);
+	void bind_texcoorddata(Vector2*, int, int);
 	//void bind_normaldata(float*, int);
 	void bind_colordata(Color*, int);
 	void bind_indexdata(unsigned int*, int);
@@ -122,13 +123,17 @@ private:
 	RenderBuffer* _renderbuffer;
 	Shader* _shader;
 	Vector3* _vertexdata;
+	Vector2* _uv0data;
+	Vector2* _uv1data;
+	Vector2* _uv2data;
+	Vector2* _uv3data;
 	Color* _colordata;
 	unsigned int* _indexdata;
 	SDL_Surface* _surface;
 
 	int _width, _height;
 	Color _clear_color;
-	int _vertexcount, _colorcount, _indexcount;
+	int _vertexcount, _colorcount, _indexcount, _uv0count, _uv1count, _uv2count, _uv3count;
 	PointRasterization* _point_rasterization;
 	LineRasterization* _line_rasterization;
 	TriangleRasterization* _triangle_rasterization;
