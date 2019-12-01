@@ -24,8 +24,8 @@ void TextureShader::vert(const VertexInput& in, FragmentInput& out)
 bool TextureShader::frag(const FragmentInput& in, Color& out)
 {
 	out = _texture->sample(in.uv0.x, in.uv0.y);
-	if (out.r > 0.5f && out.g > 0.5f && out.b > 0.5f)
-		return false;
+	//if (out.r > 0.5f && out.g > 0.5f && out.b > 0.5f)
+	//	return false;
 	return true;
 }
 

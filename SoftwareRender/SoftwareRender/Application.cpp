@@ -65,9 +65,10 @@ bool Application::init(int width, int height, const char * applicationName)
 	_obj2->position = Vector3(-10.76f, 23.73f, -20.55f);
 	_obj2->euler = Vector3(8.554001f, -103.278f, 95.492f);
 
-	graphics->set_zwrite(false);
-	graphics->set_blend(true);
-	graphics->set_blendmode(BlendMode_One, BlendMode_One);
+	//graphics->set_zwrite(false);
+	//graphics->set_ztest(CompareFunction_Always);
+	//graphics->set_blend(true);
+	//graphics->set_blendmode(BlendMode_One, BlendMode_One);
 
 	_camera->prepare_render();
 	_obj1->draw(graphics);
@@ -106,8 +107,9 @@ void Application::run()
 			{
 				done = true;
 			}
-			time += 4.9f;
+			time += 1.0f;
 			SDL_UpdateWindowSurface(window);
+			Sleep(5);
 		}
 	}
 }
@@ -129,6 +131,12 @@ void Application::close()
 
 bool Application::application_loop(float time)
 {
-
+	graphics->clear(ClearFlags_Color | ClearFlags_Depth);
+	_camera->prepare_render();
+	Vector3 euler = _obj1->euler;
+	euler.y += 12;
+	_obj1->euler = euler;
+	_obj1->draw(graphics);
+	_obj2->draw(graphics);
 	return true;
 }
